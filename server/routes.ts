@@ -85,12 +85,10 @@ export async function registerRoutes(
   // Create Entry (Protected)
   app.post(api.entries.create.path, isAuthenticated, async (req, res) => {
     try {
-      const input = insertEntrySchema.parse({
-        ...req.body,
-        userId: (req.user as any).claims.sub
-      });
+      const input = insertEntrySchema.parse(req.body);
+      const userId = (req.user as any).claims.sub;
       
-      const entry = await storage.createEntry(input);
+      const entry = await storage.createEntry({ ...input, userId });
       res.status(201).json(entry);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -99,6 +97,7 @@ export async function registerRoutes(
           field: err.errors[0].path.join('.'),
         });
       }
+      console.error("Error creating entry:", err);
       res.status(500).json({ message: "Internal Server Error" });
     }
   });

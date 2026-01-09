@@ -12,7 +12,7 @@ export interface IStorage extends IAuthStorage {
   createPrompt(content: string, category: string): Promise<Prompt>;
   
   // Entries
-  createEntry(entry: InsertEntry): Promise<Entry>;
+  createEntry(entry: InsertEntry & { userId: string }): Promise<Entry>;
   getUserEntries(userId: string): Promise<(Entry & { prompt: Prompt | null })[]>;
   deleteEntry(id: number, userId: string): Promise<boolean>;
   getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null }>;
@@ -48,7 +48,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Entries
-  async createEntry(entry: InsertEntry): Promise<Entry> {
+  async createEntry(entry: InsertEntry & { userId: string }): Promise<Entry> {
     const [newEntry] = await db.insert(entries)
       .values(entry)
       .returning();
