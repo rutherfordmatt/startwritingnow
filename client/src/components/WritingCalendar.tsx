@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { format, startOfDay, eachDayOfInterval, getDay, addDays, subDays } from "date-fns";
+import { format, startOfDay, eachDayOfInterval, getDay, addDays, subDays, startOfWeek, endOfWeek } from "date-fns";
 import { motion } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -17,54 +17,48 @@ interface WritingCalendarProps {
 export function WritingCalendar({ entries, daysToShow = 30 }: WritingCalendarProps) {
   const today = startOfDay(new Date());
   
-  const { calendarData } = useMemo(() => {
-    const entriesMap = new Map<string, { count: number; words: number }>();
+  const { weeks, entriesMap } = useMemo(() => {
+    const map = new Map<string, { count: number; words: number }>();
     
     entries.forEach((entry) => {
       const dateKey = format(new Date(entry.createdAt), "yyyy-MM-dd");
-      const existing = entriesMap.get(dateKey) || { count: 0, words: 0 };
-      entriesMap.set(dateKey, {
+      const existing = map.get(dateKey) || { count: 0, words: 0 };
+      map.set(dateKey, {
         count: existing.count + 1,
         words: existing.words + entry.wordCount,
       });
     });
 
     const startDate = subDays(today, daysToShow - 1);
+    const weekStart = startOfWeek(startDate);
+    const weekEnd = endOfWeek(today);
     
-    const allDays = eachDayOfInterval({ start: startDate, end: today });
+    const allDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
     
-    const weeks: { date: Date; dateKey: string; data: { count: number; words: number } | null }[][] = [];
-    let currentWeek: { date: Date; dateKey: string; data: { count: number; words: number } | null }[] = [];
-    
-    const firstDayOfWeek = getDay(startDate);
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      currentWeek.push({ date: subDays(startDate, firstDayOfWeek - i), dateKey: "", data: null });
-    }
+    const weekRows: { date: Date; dateKey: string; inRange: boolean }[][] = [];
+    let currentWeek: { date: Date; dateKey: string; inRange: boolean }[] = [];
     
     allDays.forEach((day) => {
       const dateKey = format(day, "yyyy-MM-dd");
-      const data = entriesMap.get(dateKey) || null;
+      const inRange = day >= startDate && day <= today;
       
-      currentWeek.push({ date: day, dateKey, data });
+      currentWeek.push({ date: day, dateKey, inRange });
       
       if (getDay(day) === 6) {
-        weeks.push(currentWeek);
+        weekRows.push(currentWeek);
         currentWeek = [];
       }
     });
     
     if (currentWeek.length > 0) {
-      while (currentWeek.length < 7) {
-        const lastDay = currentWeek[currentWeek.length - 1].date;
-        currentWeek.push({ date: addDays(lastDay, 1), dateKey: "", data: null });
-      }
-      weeks.push(currentWeek);
+      weekRows.push(currentWeek);
     }
     
-    return { calendarData: weeks };
+    return { weeks: weekRows, entriesMap: map };
   }, [entries, daysToShow, today]);
 
-  const getIntensity = (data: { count: number; words: number } | null): number => {
+  const getIntensity = (dateKey: string): number => {
+    const data = entriesMap.get(dateKey);
     if (!data) return 0;
     if (data.count >= 3) return 4;
     if (data.count >= 2) return 3;
@@ -80,7 +74,7 @@ export function WritingCalendar({ entries, daysToShow = 30 }: WritingCalendarPro
     4: "bg-primary dark:bg-primary",
   };
 
-  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
 
   return (
     <motion.div
@@ -96,53 +90,55 @@ export function WritingCalendar({ entries, daysToShow = 30 }: WritingCalendarPro
         </p>
       </div>
 
-      <div className="flex gap-2">
-        <div className="flex flex-col justify-between text-xs text-muted-foreground pr-2 py-1">
-          {[0, 2, 4, 6].map((dayIndex) => (
-            <span key={dayIndex} className="h-3 leading-3">
-              {dayIndex % 2 === 0 ? dayLabels[dayIndex].charAt(0) : ""}
-            </span>
+      <div className="space-y-1" data-testid="calendar-grid">
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {dayLabels.map((label, idx) => (
+            <div key={idx} className="text-center text-xs text-muted-foreground font-medium">
+              {label}
+            </div>
           ))}
         </div>
         
-        <div className="flex-1 overflow-x-auto">
-          <div className="flex gap-1" data-testid="calendar-grid">
-            {calendarData.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1">
-                {week.map((day) => {
-                  const intensity = getIntensity(day.data);
-                  const isToday = day.dateKey === format(today, "yyyy-MM-dd");
-                  const isFuture = day.date > today;
-                  
-                  return (
-                    <Tooltip key={day.dateKey}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={`
-                            w-3 h-3 rounded-sm transition-all duration-200
-                            ${isFuture ? "bg-transparent" : intensityClasses[intensity]}
-                            ${isToday ? "ring-1 ring-primary ring-offset-1 ring-offset-background" : ""}
-                          `}
-                          data-testid={`calendar-day-${day.dateKey}`}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs">
-                        <p className="font-medium">{format(day.date, "MMM d, yyyy")}</p>
-                        {day.data ? (
-                          <p className="text-muted-foreground">
-                            {day.data.count} {day.data.count === 1 ? "entry" : "entries"} · {day.data.words} words
-                          </p>
-                        ) : (
-                          <p className="text-muted-foreground">No entries</p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            ))}
+        {weeks.map((week, weekIndex) => (
+          <div key={weekIndex} className="grid grid-cols-7 gap-1">
+            {week.map((day) => {
+              const intensity = day.inRange ? getIntensity(day.dateKey) : -1;
+              const isToday = day.dateKey === format(today, "yyyy-MM-dd");
+              const data = entriesMap.get(day.dateKey);
+              
+              return (
+                <Tooltip key={day.dateKey || `empty-${weekIndex}-${getDay(day.date)}`}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`
+                        aspect-square rounded-md transition-all duration-200 flex items-center justify-center
+                        ${!day.inRange ? "bg-transparent" : intensityClasses[intensity]}
+                        ${isToday ? "ring-2 ring-primary ring-offset-1 ring-offset-background" : ""}
+                      `}
+                      data-testid={`calendar-day-${day.dateKey}`}
+                    >
+                      <span className={`text-xs ${day.inRange ? (intensity >= 3 ? "text-primary-foreground" : "text-muted-foreground") : "text-transparent"}`}>
+                        {format(day.date, "d")}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  {day.inRange && (
+                    <TooltipContent side="top" className="text-xs">
+                      <p className="font-medium">{format(day.date, "MMM d, yyyy")}</p>
+                      {data ? (
+                        <p className="text-muted-foreground">
+                          {data.count} {data.count === 1 ? "entry" : "entries"} · {data.words} words
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground">No entries</p>
+                      )}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              );
+            })}
           </div>
-        </div>
+        ))}
       </div>
 
       <div className="flex items-center justify-end gap-2 mt-4 text-xs text-muted-foreground">
