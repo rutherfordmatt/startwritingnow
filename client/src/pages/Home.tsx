@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
-import { LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
+import { LogOut, LayoutDashboard, ChevronRight, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
@@ -159,9 +159,28 @@ export default function Home() {
                 <span className="text-xs font-mono text-muted-foreground">
                   {wordCount} words
                 </span>
-                <AnimatePresence>
+                <AnimatePresence mode="wait">
+                  {hasStarted && !timerComplete && wordCount >= 5 && (
+                    <motion.div
+                      key="done"
+                      initial={{ opacity: 0, scale: 0.9, x: 20 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                    >
+                      <Button 
+                        variant="outline"
+                        onClick={() => setTimerComplete(true)}
+                        className="gap-2"
+                        data-testid="button-done"
+                      >
+                        <Check className="w-4 h-4" />
+                        Done
+                      </Button>
+                    </motion.div>
+                  )}
                   {canSave && (
                     <motion.div
+                      key="save"
                       initial={{ opacity: 0, scale: 0.9, x: 20 }}
                       animate={{ opacity: 1, scale: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.9 }}
@@ -170,6 +189,7 @@ export default function Home() {
                         onClick={handleSave} 
                         disabled={isSaving}
                         className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+                        data-testid="button-save-entry"
                       >
                         {isSaving ? "Saving..." : (
                           <>
