@@ -304,7 +304,7 @@ export default function Dashboard() {
         {/* Writing Calendar */}
         {entries && entries.length > 0 && (
           <div className="mb-10">
-            <WritingCalendar entries={entries} weeksToShow={12} />
+            <WritingCalendar entries={entries} daysToShow={30} />
           </div>
         )}
 

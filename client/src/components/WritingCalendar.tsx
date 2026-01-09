@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { format, startOfDay, eachDayOfInterval, getDay, subWeeks, addDays, subDays } from "date-fns";
+import { format, startOfDay, eachDayOfInterval, getDay, addDays, subDays } from "date-fns";
 import { motion } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -11,13 +11,13 @@ interface Entry {
 
 interface WritingCalendarProps {
   entries: Entry[];
-  weeksToShow?: number;
+  daysToShow?: number;
 }
 
-export function WritingCalendar({ entries, weeksToShow = 12 }: WritingCalendarProps) {
+export function WritingCalendar({ entries, daysToShow = 30 }: WritingCalendarProps) {
   const today = startOfDay(new Date());
   
-  const { calendarData, entriesByDate } = useMemo(() => {
+  const { calendarData } = useMemo(() => {
     const entriesMap = new Map<string, { count: number; words: number }>();
     
     entries.forEach((entry) => {
@@ -29,15 +29,17 @@ export function WritingCalendar({ entries, weeksToShow = 12 }: WritingCalendarPr
       });
     });
 
-    const startDate = subWeeks(today, weeksToShow - 1);
-    const adjustedStart = subDays(startDate, getDay(startDate));
+    const startDate = subDays(today, daysToShow - 1);
     
-    const endDate = addDays(today, 6 - getDay(today));
-    
-    const allDays = eachDayOfInterval({ start: adjustedStart, end: endDate });
+    const allDays = eachDayOfInterval({ start: startDate, end: today });
     
     const weeks: { date: Date; dateKey: string; data: { count: number; words: number } | null }[][] = [];
     let currentWeek: { date: Date; dateKey: string; data: { count: number; words: number } | null }[] = [];
+    
+    const firstDayOfWeek = getDay(startDate);
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      currentWeek.push({ date: subDays(startDate, firstDayOfWeek - i), dateKey: "", data: null });
+    }
     
     allDays.forEach((day) => {
       const dateKey = format(day, "yyyy-MM-dd");
@@ -52,11 +54,15 @@ export function WritingCalendar({ entries, weeksToShow = 12 }: WritingCalendarPr
     });
     
     if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) {
+        const lastDay = currentWeek[currentWeek.length - 1].date;
+        currentWeek.push({ date: addDays(lastDay, 1), dateKey: "", data: null });
+      }
       weeks.push(currentWeek);
     }
     
-    return { calendarData: weeks, entriesByDate: entriesMap };
-  }, [entries, weeksToShow, today]);
+    return { calendarData: weeks };
+  }, [entries, daysToShow, today]);
 
   const getIntensity = (data: { count: number; words: number } | null): number => {
     if (!data) return 0;
@@ -86,7 +92,7 @@ export function WritingCalendar({ entries, weeksToShow = 12 }: WritingCalendarPr
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-medium text-foreground">Writing Activity</h3>
         <p className="text-xs text-muted-foreground">
-          Last {weeksToShow} weeks
+          Last {daysToShow} days
         </p>
       </div>
 
