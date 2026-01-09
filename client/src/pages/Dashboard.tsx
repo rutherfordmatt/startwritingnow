@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEntries, useStreak, useDeleteEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useReminderSettings, useUpdateReminderSettings, useSendTestReminder } from "@/hooks/use-reminders";
@@ -65,6 +65,13 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showReminderSettings, setShowReminderSettings] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  
+  useEffect(() => {
+    if (reminderSettings?.email) {
+      setEmailInput(reminderSettings.email);
+    }
+  }, [reminderSettings?.email]);
 
   const handleExportJSON = () => {
     if (!entries) return;
@@ -339,7 +346,7 @@ export default function Dashboard() {
                     <Switch
                       id="reminder-toggle"
                       checked={reminderSettings?.enabled ?? false}
-                      disabled={isUpdatingReminders || !reminderSettings?.email}
+                      disabled={isUpdatingReminders || !emailInput}
                       onCheckedChange={(checked) => {
                         updateReminders({ enabled: checked }, {
                           onSuccess: () => {
@@ -363,11 +370,16 @@ export default function Dashboard() {
                       id="reminder-email"
                       type="email"
                       placeholder="your@email.com"
-                      value={reminderSettings?.email ?? ""}
-                      onChange={(e) => updateReminders({ email: e.target.value || null })}
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onBlur={() => {
+                        if (emailInput !== (reminderSettings?.email ?? "")) {
+                          updateReminders({ email: emailInput || null });
+                        }
+                      }}
                       data-testid="input-reminder-email"
                     />
-                    {!reminderSettings?.email && (
+                    {!emailInput && (
                       <p className="text-xs text-muted-foreground">Add your email to enable reminders</p>
                     )}
                   </div>
@@ -417,7 +429,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {reminderSettings?.email && (
+                  {emailInput && (
                     <div className="pt-2">
                       <Button
                         variant="outline"
