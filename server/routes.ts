@@ -6,6 +6,15 @@ import { api } from "@shared/routes";
 import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
 
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      username: string;
+    }
+  }
+}
+
 const SEED_PROMPTS = [
   // Life
   { category: "Life", content: "What is a small moment today that brought you joy?" },
@@ -86,7 +95,7 @@ export async function registerRoutes(
   app.post(api.entries.create.path, isAuthenticated, async (req, res) => {
     try {
       const input = insertEntrySchema.parse(req.body);
-      const userId = (req.user as any).claims.sub;
+      const userId = req.user!.id;
       
       const entry = await storage.createEntry({ ...input, userId });
       res.status(201).json(entry);
@@ -104,21 +113,21 @@ export async function registerRoutes(
 
   // List Entries (Protected)
   app.get(api.entries.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = req.user!.id;
     const entries = await storage.getUserEntries(userId);
     res.json(entries);
   });
 
   // Get Streak (Protected)
   app.get(api.entries.streak.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = req.user!.id;
     const streakInfo = await storage.getStreak(userId);
     res.json(streakInfo);
   });
 
   // Delete Entry (Protected)
   app.delete(api.entries.delete.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = req.user!.id;
     const entryId = parseInt(req.params.id, 10);
     
     if (isNaN(entryId)) {

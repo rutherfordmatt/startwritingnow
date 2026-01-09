@@ -41,11 +41,9 @@ export default function Home() {
     if (!content.trim()) return;
 
     if (!isAuthenticated) {
-      // If not authenticated, save to local storage (optional enhancement) 
-      // then redirect to login
       sessionStorage.setItem("draft_content", content);
       sessionStorage.setItem("draft_prompt", String(prompt?.id));
-      window.location.href = "/api/login";
+      setLocation("/auth");
       return;
     }
 
@@ -107,9 +105,9 @@ export default function Home() {
               </Button>
             </>
           ) : (
-            <a href="/api/login" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link href="/auth" className="text-sm font-medium hover:text-primary transition-colors">
               Log In
-            </a>
+            </Link>
           )}
         </div>
       </nav>
