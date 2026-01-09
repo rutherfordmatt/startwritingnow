@@ -11,6 +11,16 @@ const APP_URL = process.env.REPLIT_DEV_DOMAIN
     ? `https://${process.env.REPLIT_DEPLOYMENT_URL}`
     : 'http://localhost:5000';
 
+function getDisplayName(user: { firstName?: string | null; username: string; email?: string | null }): string {
+  if (user.firstName) {
+    return user.firstName;
+  }
+  const emailOrUsername = user.email || user.username;
+  const localPart = emailOrUsername.split('@')[0];
+  const firstName = localPart.split(/[._-]/)[0];
+  return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+}
+
 async function getRandomPrompt(): Promise<string> {
   const allPrompts = await db.select().from(prompts);
   if (allPrompts.length === 0) {
@@ -46,7 +56,7 @@ async function sendReminders(): Promise<void> {
         const prompt = await getRandomPrompt();
         const success = await sendReminderEmail({
           to: user.email,
-          username: user.firstName || user.username,
+          username: getDisplayName(user),
           prompt,
           appUrl: APP_URL,
         });
@@ -81,7 +91,7 @@ export async function sendTestReminder(userId: string): Promise<boolean> {
   const prompt = await getRandomPrompt();
   return sendReminderEmail({
     to: user.email,
-    username: user.firstName || user.username,
+    username: getDisplayName(user),
     prompt,
     appUrl: APP_URL,
   });
