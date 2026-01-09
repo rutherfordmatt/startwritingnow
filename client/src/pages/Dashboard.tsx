@@ -3,11 +3,12 @@ import { useEntries, useStreak, useDeleteEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut } from "lucide-react";
+import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { jsPDF } from "jspdf";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -28,7 +35,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const handleExport = () => {
+  const handleExportJSON = () => {
     if (!entries) return;
     const exportData = entries.map(e => ({
       date: format(new Date(e.createdAt), 'yyyy-MM-dd HH:mm'),
@@ -44,7 +51,94 @@ export default function Dashboard() {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-    toast({ title: "Exported", description: "Your journal entries have been downloaded." });
+    toast({ title: "Exported", description: "Your journal entries have been downloaded as JSON." });
+  };
+
+  const handleExportTXT = () => {
+    if (!entries) return;
+    let textContent = "JOURNAL EXPORT\n";
+    textContent += `Exported: ${format(new Date(), 'MMMM d, yyyy')}\n`;
+    textContent += "=".repeat(50) + "\n\n";
+    
+    entries.forEach((e, index) => {
+      textContent += `Entry ${index + 1}\n`;
+      textContent += "-".repeat(30) + "\n";
+      textContent += `Date: ${format(new Date(e.createdAt), 'MMMM d, yyyy h:mm a')}\n`;
+      textContent += `Category: ${e.prompt?.category || 'Journal'}\n`;
+      textContent += `Prompt: ${e.prompt?.content || 'Free Writing'}\n`;
+      textContent += `Word Count: ${e.wordCount}\n\n`;
+      textContent += e.content + "\n\n";
+      textContent += "=".repeat(50) + "\n\n";
+    });
+    
+    const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(textContent);
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `journal_export_${format(new Date(), 'yyyy-MM-dd')}.txt`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    toast({ title: "Exported", description: "Your journal entries have been downloaded as TXT." });
+  };
+
+  const handleExportPDF = () => {
+    if (!entries) return;
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxWidth = pageWidth - margin * 2;
+    let yPos = 20;
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("Journal Export", margin, yPos);
+    yPos += 10;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Exported: ${format(new Date(), 'MMMM d, yyyy')}`, margin, yPos);
+    yPos += 15;
+    
+    entries.forEach((e, index) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(`${e.prompt?.category || 'Journal'} - ${format(new Date(e.createdAt), 'MMM d, yyyy')}`, margin, yPos);
+      yPos += 7;
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10);
+      const promptLines = doc.splitTextToSize(e.prompt?.content || 'Free Writing', maxWidth);
+      doc.text(promptLines, margin, yPos);
+      yPos += promptLines.length * 5 + 5;
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const contentLines = doc.splitTextToSize(e.content, maxWidth);
+      
+      contentLines.forEach((line: string) => {
+        if (yPos > 280) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text(line, margin, yPos);
+        yPos += 5;
+      });
+      
+      doc.setFontSize(8);
+      doc.setTextColor(128);
+      doc.text(`${e.wordCount} words`, margin, yPos);
+      doc.setTextColor(0);
+      yPos += 15;
+    });
+    
+    doc.save(`journal_export_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast({ title: "Exported", description: "Your journal entries have been downloaded as PDF." });
   };
 
   const handleDelete = (id: number) => {
@@ -80,10 +174,29 @@ export default function Dashboard() {
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button variant="outline" size="sm" onClick={handleExport} className="gap-2" data-testid="button-export">
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2" data-testid="button-export">
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Export</span>
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportJSON} className="gap-2" data-testid="button-export-json">
+                  <FileJson className="w-4 h-4" />
+                  Export as JSON
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportTXT} className="gap-2" data-testid="button-export-txt">
+                  <FileText className="w-4 h-4" />
+                  Export as TXT
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2" data-testid="button-export-pdf">
+                  <FileType className="w-4 h-4" />
+                  Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link href="/">
               <Button className="gap-2" data-testid="button-write-new">
                 <PenLine className="w-4 h-4" />
