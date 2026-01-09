@@ -14,6 +14,7 @@ export interface IStorage extends IAuthStorage {
   // Entries
   createEntry(entry: InsertEntry): Promise<Entry>;
   getUserEntries(userId: string): Promise<(Entry & { prompt: Prompt | null })[]>;
+  deleteEntry(id: number, userId: string): Promise<boolean>;
   getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null }>;
 }
 
@@ -70,6 +71,13 @@ export class DatabaseStorage implements IStorage {
     .orderBy(desc(entries.createdAt));
   }
 
+  async deleteEntry(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(entries)
+      .where(and(eq(entries.id, id), eq(entries.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+
   async getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null }> {
     const userEntries = await db.select({
       createdAt: entries.createdAt
@@ -82,40 +90,54 @@ export class DatabaseStorage implements IStorage {
       return { currentStreak: 0, longestStreak: 0, lastEntryDate: null };
     }
 
-    // Calculate streak
-    let currentStreak = 0;
-    let longestStreak = 0;
+    // Get unique dates (one entry per day counts)
+    const uniqueDates = [...new Set(
+      userEntries.map(e => {
+        const d = new Date(e.createdAt);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      })
+    )].sort((a, b) => b - a); // Sort descending
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Check if the most recent entry was today or yesterday
-    const lastEntryDate = new Date(userEntries[0].createdAt);
-    lastEntryDate.setHours(0, 0, 0, 0);
+    // Calculate current streak
+    let currentStreak = 0;
+    const todayTime = today.getTime();
+    const dayMs = 24 * 60 * 60 * 1000;
     
-    const diffTime = Math.abs(today.getTime() - lastEntryDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays <= 1) {
+    // Check if most recent entry was today or yesterday
+    const mostRecentDiff = Math.floor((todayTime - uniqueDates[0]) / dayMs);
+    
+    if (mostRecentDiff <= 1) {
       currentStreak = 1;
-      let previousDate = lastEntryDate;
-
-      for (let i = 1; i < userEntries.length; i++) {
-        const entryDate = new Date(userEntries[i].createdAt);
-        entryDate.setHours(0, 0, 0, 0);
-        
-        const dayDiff = (previousDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24);
-        
-        if (dayDiff === 1) {
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const diff = Math.floor((uniqueDates[i - 1] - uniqueDates[i]) / dayMs);
+        if (diff === 1) {
           currentStreak++;
-        } else if (dayDiff > 1) {
-          break; 
+        } else {
+          break;
         }
-        previousDate = entryDate;
       }
     }
     
-    // Simplified longest streak logic for MVP
-    longestStreak = Math.max(currentStreak, longestStreak);
+    // Calculate longest streak by scanning all dates
+    let longestStreak = uniqueDates.length > 0 ? 1 : 0; // At least 1 if any entries exist
+    let tempStreak = 1;
+    
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const diff = Math.floor((uniqueDates[i - 1] - uniqueDates[i]) / dayMs);
+      if (diff === 1) {
+        tempStreak++;
+      } else {
+        tempStreak = 1;
+      }
+      longestStreak = Math.max(longestStreak, tempStreak);
+    }
+    
+    // Ensure longest streak is at least as big as current streak
+    longestStreak = Math.max(longestStreak, currentStreak);
 
     return {
       currentStreak,

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, type InsertEntry } from "@shared/routes";
+import { api, buildUrl, type InsertEntry } from "@shared/routes";
 
 export function useEntries() {
   return useQuery({
@@ -69,6 +69,35 @@ export function useRandomPrompt(category?: 'Life' | 'Career') {
       return api.prompts.random.responses[200].parse(await res.json());
     },
     refetchOnWindowFocus: false,
-    staleTime: Infinity, // Don't refetch automatically to keep writing flow
+    staleTime: Infinity,
+  });
+}
+
+export function useDeleteEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.entries.delete.path, { id });
+      const res = await fetch(url, {
+        method: api.entries.delete.method,
+        credentials: "include",
+      });
+      
+      if (res.status === 401) {
+        throw new Error("Unauthorized");
+      }
+      
+      if (res.status === 404) {
+        throw new Error("Entry not found");
+      }
+      
+      if (!res.ok) {
+        throw new Error("Failed to delete entry");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.entries.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.entries.streak.path] });
+    },
   });
 }

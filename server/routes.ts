@@ -117,5 +117,21 @@ export async function registerRoutes(
     res.json(streakInfo);
   });
 
+  // Delete Entry (Protected)
+  app.delete(api.entries.delete.path, isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).claims.sub;
+    const entryId = parseInt(req.params.id, 10);
+    
+    if (isNaN(entryId)) {
+      return res.status(400).json({ message: "Invalid entry ID" });
+    }
+    
+    const deleted = await storage.deleteEntry(entryId, userId);
+    if (!deleted) {
+      return res.status(404).json({ message: "Entry not found" });
+    }
+    res.status(204).send();
+  });
+
   return httpServer;
 }

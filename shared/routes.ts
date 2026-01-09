@@ -58,6 +58,15 @@ export const api = {
         401: z.object({ message: z.string() }),
       },
     },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/entries/:id',
+      responses: {
+        204: z.void(),
+        401: z.object({ message: z.string() }),
+        404: errorSchemas.notFound,
+      },
+    },
   },
 };
 
