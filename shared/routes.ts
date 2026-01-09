@@ -28,6 +28,23 @@ export const updateReminderSettingsSchema = z.object({
   email: z.string().nullable().optional(),
 });
 
+export const adminStatsSchema = z.object({
+  totalUsers: z.number(),
+  usersWithEmail: z.number(),
+  usersWithReminders: z.number(),
+  totalEntries: z.number(),
+});
+
+export const adminUserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string().nullable(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  createdAt: z.string().nullable(),
+  reminderEnabled: z.boolean().nullable(),
+});
+
 export const api = {
   prompts: {
     random: {
@@ -38,6 +55,26 @@ export const api = {
       }).optional(),
       responses: {
         200: z.custom<typeof prompts.$inferSelect>(),
+      },
+    },
+  },
+  admin: {
+    stats: {
+      method: 'GET' as const,
+      path: '/api/admin/stats',
+      responses: {
+        200: adminStatsSchema,
+        401: z.object({ message: z.string() }),
+        403: z.object({ message: z.string() }),
+      },
+    },
+    users: {
+      method: 'GET' as const,
+      path: '/api/admin/users',
+      responses: {
+        200: z.array(adminUserSchema),
+        401: z.object({ message: z.string() }),
+        403: z.object({ message: z.string() }),
       },
     },
   },
@@ -130,3 +167,5 @@ export type StreakResponse = z.infer<typeof api.entries.streak.responses[200]>;
 export type InsertEntry = z.infer<typeof insertEntrySchema>;
 export type ReminderSettings = z.infer<typeof reminderSettingsSchema>;
 export type UpdateReminderSettings = z.infer<typeof updateReminderSettingsSchema>;
+export type AdminStats = z.infer<typeof adminStatsSchema>;
+export type AdminUser = z.infer<typeof adminUserSchema>;

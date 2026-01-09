@@ -12,6 +12,23 @@ export interface ReminderSettings {
   email: string | null;
 }
 
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  createdAt: Date | null;
+  reminderEnabled: boolean | null;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  usersWithEmail: number;
+  usersWithReminders: number;
+  totalEntries: number;
+}
+
 export interface IStorage {
   // Prompts
   getRandomPrompt(category?: string): Promise<Prompt | undefined>;
@@ -26,6 +43,10 @@ export interface IStorage {
   // Reminders
   getReminderSettings(userId: string): Promise<ReminderSettings | undefined>;
   updateReminderSettings(userId: string, settings: Partial<ReminderSettings>): Promise<ReminderSettings | undefined>;
+  
+  // Admin
+  getAdminStats(): Promise<AdminStats>;
+  getAllUsers(): Promise<AdminUser[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -188,6 +209,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
     
     return this.getReminderSettings(userId);
+  }
+
+  // Admin
+  async getAdminStats(): Promise<AdminStats> {
+    const allUsers = await db.select().from(users);
+    const allEntries = await db.select().from(entries);
+    
+    return {
+      totalUsers: allUsers.length,
+      usersWithEmail: allUsers.filter(u => u.email).length,
+      usersWithReminders: allUsers.filter(u => u.reminderEnabled).length,
+      totalEntries: allEntries.length,
+    };
+  }
+
+  async getAllUsers(): Promise<AdminUser[]> {
+    const allUsers = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      createdAt: users.createdAt,
+      reminderEnabled: users.reminderEnabled,
+    })
+    .from(users)
+    .orderBy(desc(users.createdAt));
+    
+    return allUsers;
   }
 }
 

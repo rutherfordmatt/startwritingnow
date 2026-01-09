@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
@@ -6,6 +6,18 @@ import { api, updateReminderSettingsSchema } from "@shared/routes";
 import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
+
+const ADMIN_USERNAMES = ["matt,rutherford@gmail.com"];
+
+function isAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  if (!ADMIN_USERNAMES.includes(req.user.username)) {
+    return res.status(403).json({ message: "Forbidden - Admin access required" });
+  }
+  next();
+}
 
 declare global {
   namespace Express {
@@ -188,6 +200,24 @@ export async function registerRoutes(
     } else {
       res.json({ success: false, message: "Failed to send. Make sure you have an email set." });
     }
+  });
+
+  // Admin Routes
+  
+  // Get Admin Stats (Admin only)
+  app.get(api.admin.stats.path, isAdmin, async (req, res) => {
+    const stats = await storage.getAdminStats();
+    res.json(stats);
+  });
+
+  // Get All Users (Admin only)
+  app.get(api.admin.users.path, isAdmin, async (req, res) => {
+    const users = await storage.getAllUsers();
+    const usersWithFormattedDates = users.map(u => ({
+      ...u,
+      createdAt: u.createdAt ? u.createdAt.toISOString() : null,
+    }));
+    res.json(usersWithFormattedDates);
   });
 
   return httpServer;
