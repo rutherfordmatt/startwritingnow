@@ -22,8 +22,9 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express
 - **Language**: TypeScript (ESM modules)
 - **API Design**: RESTful JSON API with Zod schema validation
-- **Authentication**: Replit Auth (OpenID Connect) with Passport.js
+- **Authentication**: Username/password with Passport.js (passport-local strategy)
 - **Session Management**: PostgreSQL-backed sessions via connect-pg-simple
+- **Password Hashing**: bcryptjs with 12 salt rounds
 
 ### Data Storage
 - **Database**: PostgreSQL
@@ -37,7 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Protected Routes**: Authentication check via `isAuthenticated` middleware and client-side route guards
 
 ### Database Schema
-- **users**: User accounts (managed by Replit Auth)
+- **users**: User accounts with username and hashed password
 - **sessions**: Authentication sessions
 - **prompts**: Writing prompts with categories (Life/Career)
 - **entries**: User journal entries with word count tracking
@@ -45,7 +46,8 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Authentication
-- Replit Auth (OpenID Connect) - handles user authentication flow
+- Username/password authentication with passport-local
+- Password hashing with bcryptjs
 - Sessions stored in PostgreSQL for persistence
 
 ### Database
@@ -54,14 +56,13 @@ Preferred communication style: Simple, everyday language.
 
 ### Required Environment Variables
 - `DATABASE_URL` - PostgreSQL connection string
-- `SESSION_SECRET` - Secret for session encryption
-- `REPL_ID` - Replit environment identifier (auto-set in Replit)
-- `ISSUER_URL` - OIDC issuer URL (defaults to Replit's OIDC endpoint)
+- `SESSION_SECRET` - Secret for session encryption (required, no default)
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit` - Database ORM and migrations
 - `express-session` / `connect-pg-simple` - Session management
-- `passport` / `openid-client` - Authentication
+- `passport` / `passport-local` - Local authentication strategy
+- `bcryptjs` - Password hashing
 - `@tanstack/react-query` - Data fetching and caching
 - `framer-motion` - Animations
 - `date-fns` - Date formatting

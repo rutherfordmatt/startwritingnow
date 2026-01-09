@@ -1,12 +1,11 @@
 import { db } from "./db";
 import { 
-  prompts, entries, users,
-  type InsertEntry, type Prompt, type Entry, type User
+  prompts, entries,
+  type InsertEntry, type Prompt, type Entry
 } from "@shared/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
-import { authStorage, type IAuthStorage } from "./replit_integrations/auth/storage";
+import { eq, desc, and } from "drizzle-orm";
 
-export interface IStorage extends IAuthStorage {
+export interface IStorage {
   // Prompts
   getRandomPrompt(category?: string): Promise<Prompt | undefined>;
   createPrompt(content: string, category: string): Promise<Prompt>;
@@ -19,13 +18,6 @@ export interface IStorage extends IAuthStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Auth methods delegated to authStorage
-  getUser(id: string): Promise<User | undefined> {
-    return authStorage.getUser(id);
-  }
-  upsertUser(user: any): Promise<User> {
-    return authStorage.upsertUser(user);
-  }
 
   // Prompts
   async getRandomPrompt(category?: string): Promise<Prompt | undefined> {
@@ -91,13 +83,14 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get unique dates (one entry per day counts)
-    const uniqueDates = [...new Set(
+    const dateSet = new Set(
       userEntries.map(e => {
         const d = new Date(e.createdAt);
         d.setHours(0, 0, 0, 0);
         return d.getTime();
       })
-    )].sort((a, b) => b - a); // Sort descending
+    );
+    const uniqueDates = Array.from(dateSet).sort((a, b) => b - a); // Sort descending
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
