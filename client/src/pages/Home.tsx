@@ -91,7 +91,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-50">
         <div className="flex items-center gap-2">
-          <span className="font-serif font-bold text-xl tracking-tight">3min.io</span>
+          <span className="font-serif font-bold text-xl tracking-tight">startwriting.now</span>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />

@@ -37,7 +37,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground pb-20">
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <h1 className="font-serif text-xl font-bold">Your Journal</h1>
+          <Link href="/" className="font-serif text-xl font-bold hover:text-primary transition-colors">startwriting.now</Link>
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-2 hidden sm:flex">
               <Download className="w-4 h-4" />
