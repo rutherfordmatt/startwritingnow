@@ -86,3 +86,4 @@ export type PromptResponse = z.infer<typeof api.prompts.random.responses[200]>;
 export type EntryResponse = z.infer<typeof api.entries.create.responses[201]>;
 export type EntriesListResponse = z.infer<typeof api.entries.list.responses[200]>;
 export type StreakResponse = z.infer<typeof api.entries.streak.responses[200]>;
+export type InsertEntry = z.infer<typeof insertEntrySchema>;

@@ -20,7 +20,6 @@ export default function Home() {
 
   const [content, setContent] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
-  const [timerComplete, setTimerComplete] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
@@ -78,13 +77,11 @@ export default function Home() {
     if (draft && isAuthenticated) {
       setContent(draft);
       setHasStarted(true);
-      setTimerComplete(true); // Assuming they already spent time writing
       sessionStorage.removeItem("draft_content");
     }
   }, [isAuthenticated]);
 
   const wordCount = content.trim() === "" ? 0 : content.trim().split(/\s+/).length;
-  const canSave = wordCount > 5 && (timerComplete || wordCount > 50);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
@@ -129,7 +126,6 @@ export default function Home() {
             isLoading={promptLoading} 
             onRefresh={() => {
               setHasStarted(false);
-              setTimerComplete(false);
               setContent("");
               refetchPrompt();
             }}
@@ -151,8 +147,8 @@ export default function Home() {
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/30">
               <CountdownTimer 
                 durationSeconds={180}
-                isRunning={hasStarted && !timerComplete}
-                onComplete={() => setTimerComplete(true)}
+                isRunning={hasStarted}
+                onComplete={() => {}}
               />
               
               <div className="flex items-center gap-3">
@@ -160,25 +156,7 @@ export default function Home() {
                   {wordCount} words
                 </span>
                 <AnimatePresence mode="wait">
-                  {hasStarted && !timerComplete && wordCount >= 5 && (
-                    <motion.div
-                      key="done"
-                      initial={{ opacity: 0, scale: 0.9, x: 20 }}
-                      animate={{ opacity: 1, scale: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                    >
-                      <Button 
-                        variant="outline"
-                        onClick={() => setTimerComplete(true)}
-                        className="gap-2"
-                        data-testid="button-done"
-                      >
-                        <Check className="w-4 h-4" />
-                        Done
-                      </Button>
-                    </motion.div>
-                  )}
-                  {canSave && (
+                  {hasStarted && wordCount >= 5 && (
                     <motion.div
                       key="save"
                       initial={{ opacity: 0, scale: 0.9, x: 20 }}
@@ -188,12 +166,13 @@ export default function Home() {
                       <Button 
                         onClick={handleSave} 
                         disabled={isSaving}
-                        className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+                        className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2"
                         data-testid="button-save-entry"
                       >
                         {isSaving ? "Saving..." : (
                           <>
-                            Save Entry <ChevronRight className="ml-2 w-4 h-4" />
+                            <Check className="w-4 h-4" />
+                            Done
                           </>
                         )}
                       </Button>
