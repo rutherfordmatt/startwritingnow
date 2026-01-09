@@ -3,6 +3,7 @@ import { useEntries, useStreak, useDeleteEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useReminderSettings, useUpdateReminderSettings, useSendTestReminder } from "@/hooks/use-reminders";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { WritingCalendar } from "@/components/WritingCalendar";
 import { format } from "date-fns";
 import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -299,6 +300,13 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">days</p>
           </motion.div>
         </div>
+
+        {/* Writing Calendar */}
+        {entries && entries.length > 0 && (
+          <div className="mb-10">
+            <WritingCalendar entries={entries} weeksToShow={12} />
+          </div>
+        )}
 
         {/* Reminder Settings Card */}
         <motion.div
