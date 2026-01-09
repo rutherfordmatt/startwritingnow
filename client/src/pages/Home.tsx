@@ -117,12 +117,12 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="container max-w-4xl mx-auto px-4 pt-24 pb-32 min-h-screen flex flex-col">
+      <main className="w-full max-w-3xl mx-auto px-4 pt-24 pb-32 min-h-screen flex flex-col">
         {/* Prompt Section */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6"
         >
           <PromptCard 
             prompt={prompt} 
@@ -138,55 +138,61 @@ export default function Home() {
           />
         </motion.div>
 
-        {/* Timer & Controls */}
-        <div className="sticky top-20 z-40 bg-background/80 backdrop-blur-md py-4 mb-4 flex items-center justify-between border-b border-transparent transition-all data-[scrolled=true]:border-border" data-scrolled={hasStarted}>
-          <CountdownTimer 
-            durationSeconds={180} // 3 minutes
-            isRunning={hasStarted && !timerComplete}
-            onComplete={() => setTimerComplete(true)}
-          />
-          
-          <AnimatePresence>
-            {canSave && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, x: 20 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-              >
-                <Button 
-                  onClick={handleSave} 
-                  disabled={isSaving}
-                  className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
-                >
-                  {isSaving ? "Saving..." : (
-                    <>
-                      Save Entry <ChevronRight className="ml-2 w-4 h-4" />
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Writing Area */}
+        {/* Writing Area Card */}
         <motion.div 
-          className="flex-1 w-full writing-mode relative"
+          className="relative group"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={handleStartTyping}
-            placeholder="Start typing to begin the timer..."
-            className="w-full min-h-[40vh] p-0 bg-transparent border-0 focus:ring-0 text-xl md:text-2xl leading-relaxed resize-none placeholder:text-muted-foreground/30 selection:bg-primary/20"
-            spellCheck={false}
-          />
-          
-          <div className="fixed bottom-6 right-6 text-xs font-mono text-muted-foreground bg-background/80 backdrop-blur border rounded-full px-3 py-1 pointer-events-none">
-            {wordCount} words
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary/5 via-purple-500/5 to-primary/5 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition duration-500"></div>
+          <div className="relative bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 md:p-10 shadow-sm">
+            {/* Timer & Controls */}
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/30">
+              <CountdownTimer 
+                durationSeconds={180}
+                isRunning={hasStarted && !timerComplete}
+                onComplete={() => setTimerComplete(true)}
+              />
+              
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono text-muted-foreground">
+                  {wordCount} words
+                </span>
+                <AnimatePresence>
+                  {canSave && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, x: 20 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                    >
+                      <Button 
+                        onClick={handleSave} 
+                        disabled={isSaving}
+                        className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+                      >
+                        {isSaving ? "Saving..." : (
+                          <>
+                            Save Entry <ChevronRight className="ml-2 w-4 h-4" />
+                          </>
+                        )}
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={handleStartTyping}
+              placeholder="Start typing to begin the timer..."
+              className="w-full min-h-[40vh] bg-transparent border-0 focus:ring-0 focus:outline-none text-xl md:text-2xl leading-relaxed resize-none placeholder:text-muted-foreground/30 selection:bg-primary/20 font-serif"
+              spellCheck={false}
+              data-testid="input-journal-entry"
+            />
           </div>
         </motion.div>
       </main>

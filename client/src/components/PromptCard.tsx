@@ -20,7 +20,7 @@ export function PromptCard({
   onCategoryChange 
 }: PromptCardProps) {
   return (
-    <div className="w-full max-w-3xl mx-auto mb-8">
+    <div className="w-full">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-full">
           {(["Life", "Career"] as const).map((cat) => (
