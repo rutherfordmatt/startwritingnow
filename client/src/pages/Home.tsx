@@ -92,7 +92,7 @@ export default function Home() {
           <ThemeToggle />
           {isAuthenticated ? (
             <>
-              <Link href="/dashboard" className="hidden sm:inline-flex items-center justify-center rounded-full w-10 h-10 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+              <Link href="/dashboard" className="inline-flex items-center justify-center rounded-full w-10 h-10 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" data-testid="link-dashboard">
                 <LayoutDashboard className="w-5 h-5" />
               </Link>
               <Button 
