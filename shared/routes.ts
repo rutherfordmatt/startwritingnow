@@ -14,6 +14,20 @@ export const errorSchemas = {
   }),
 };
 
+export const reminderSettingsSchema = z.object({
+  enabled: z.boolean(),
+  time: z.string(),
+  timezone: z.string(),
+  email: z.string().nullable(),
+});
+
+export const updateReminderSettingsSchema = z.object({
+  enabled: z.boolean().optional(),
+  time: z.string().optional(),
+  timezone: z.string().optional(),
+  email: z.string().nullable().optional(),
+});
+
 export const api = {
   prompts: {
     random: {
@@ -24,6 +38,33 @@ export const api = {
       }).optional(),
       responses: {
         200: z.custom<typeof prompts.$inferSelect>(),
+      },
+    },
+  },
+  reminders: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/reminders',
+      responses: {
+        200: reminderSettingsSchema,
+        401: z.object({ message: z.string() }),
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/reminders',
+      input: updateReminderSettingsSchema,
+      responses: {
+        200: reminderSettingsSchema,
+        401: z.object({ message: z.string() }),
+      },
+    },
+    test: {
+      method: 'POST' as const,
+      path: '/api/reminders/test',
+      responses: {
+        200: z.object({ success: z.boolean(), message: z.string() }),
+        401: z.object({ message: z.string() }),
       },
     },
   },
@@ -87,3 +128,5 @@ export type EntryResponse = z.infer<typeof api.entries.create.responses[201]>;
 export type EntriesListResponse = z.infer<typeof api.entries.list.responses[200]>;
 export type StreakResponse = z.infer<typeof api.entries.streak.responses[200]>;
 export type InsertEntry = z.infer<typeof insertEntrySchema>;
+export type ReminderSettings = z.infer<typeof reminderSettingsSchema>;
+export type UpdateReminderSettings = z.infer<typeof updateReminderSettingsSchema>;

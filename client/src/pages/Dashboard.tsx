@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useEntries, useStreak, useDeleteEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
+import { useReminderSettings, useUpdateReminderSettings, useSendTestReminder } from "@/hooks/use-reminders";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType } from "lucide-react";
+import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -27,13 +32,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const TIMEZONES = [
+  { value: "America/New_York", label: "Eastern Time (ET)" },
+  { value: "America/Chicago", label: "Central Time (CT)" },
+  { value: "America/Denver", label: "Mountain Time (MT)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+  { value: "America/Anchorage", label: "Alaska Time (AKT)" },
+  { value: "Pacific/Honolulu", label: "Hawaii Time (HT)" },
+  { value: "Europe/London", label: "London (GMT/BST)" },
+  { value: "Europe/Paris", label: "Paris (CET)" },
+  { value: "Europe/Berlin", label: "Berlin (CET)" },
+  { value: "Asia/Tokyo", label: "Tokyo (JST)" },
+  { value: "Asia/Shanghai", label: "Shanghai (CST)" },
+  { value: "Asia/Kolkata", label: "India (IST)" },
+  { value: "Australia/Sydney", label: "Sydney (AEST)" },
+  { value: "UTC", label: "UTC" },
+];
+
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => ({
+  value: `${hour.toString().padStart(2, "0")}:00`,
+  label: `${hour === 0 ? "12" : hour > 12 ? hour - 12 : hour}:00 ${hour < 12 ? "AM" : "PM"}`,
+}));
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { data: entries, isLoading: entriesLoading } = useEntries();
   const { data: streak, isLoading: streakLoading } = useStreak();
   const { mutate: deleteEntry, isPending: isDeleting } = useDeleteEntry();
+  const { data: reminderSettings, isLoading: reminderLoading } = useReminderSettings();
+  const { mutate: updateReminders, isPending: isUpdatingReminders } = useUpdateReminderSettings();
+  const { mutate: sendTestReminder, isPending: isSendingTest } = useSendTestReminder();
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [showReminderSettings, setShowReminderSettings] = useState(false);
 
   const handleExportJSON = () => {
     if (!entries) return;
@@ -261,6 +292,168 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">days</p>
           </motion.div>
         </div>
+
+        {/* Reminder Settings Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm mb-10"
+        >
+          <button
+            onClick={() => setShowReminderSettings(!showReminderSettings)}
+            className="w-full flex items-center justify-between"
+            data-testid="button-toggle-reminders"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-medium text-foreground">Daily Reminders</h3>
+                <p className="text-sm text-muted-foreground">
+                  {reminderSettings?.enabled 
+                    ? `Enabled - ${reminderSettings.time}` 
+                    : "Get a friendly nudge to write"}
+                </p>
+              </div>
+            </div>
+            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${showReminderSettings ? 'rotate-180' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {showReminderSettings && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-5 mt-5 border-t border-border/30 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="reminder-toggle" className="font-medium">Enable daily reminders</Label>
+                    </div>
+                    <Switch
+                      id="reminder-toggle"
+                      checked={reminderSettings?.enabled ?? false}
+                      disabled={isUpdatingReminders || !reminderSettings?.email}
+                      onCheckedChange={(checked) => {
+                        updateReminders({ enabled: checked }, {
+                          onSuccess: () => {
+                            toast({ 
+                              title: checked ? "Reminders enabled" : "Reminders disabled",
+                              description: checked ? "You'll get daily prompts to write." : "You won't receive reminder emails."
+                            });
+                          }
+                        });
+                      }}
+                      data-testid="switch-reminder-toggle"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="reminder-email" className="font-medium">Email address</Label>
+                    </div>
+                    <Input
+                      id="reminder-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={reminderSettings?.email ?? ""}
+                      onChange={(e) => updateReminders({ email: e.target.value || null })}
+                      data-testid="input-reminder-email"
+                    />
+                    {!reminderSettings?.email && (
+                      <p className="text-xs text-muted-foreground">Add your email to enable reminders</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <Label className="font-medium">Reminder time</Label>
+                      </div>
+                      <Select
+                        value={reminderSettings?.time ?? "09:00"}
+                        onValueChange={(value) => updateReminders({ time: value })}
+                        disabled={isUpdatingReminders}
+                      >
+                        <SelectTrigger data-testid="select-reminder-time">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-medium">Timezone</Label>
+                      <Select
+                        value={reminderSettings?.timezone ?? "America/New_York"}
+                        onValueChange={(value) => updateReminders({ timezone: value })}
+                        disabled={isUpdatingReminders}
+                      >
+                        <SelectTrigger data-testid="select-reminder-timezone">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIMEZONES.map((tz) => (
+                            <SelectItem key={tz.value} value={tz.value}>
+                              {tz.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {reminderSettings?.email && (
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => {
+                          sendTestReminder(undefined, {
+                            onSuccess: (data) => {
+                              toast({
+                                title: data.success ? "Test sent!" : "Couldn't send",
+                                description: data.message,
+                                variant: data.success ? "default" : "destructive"
+                              });
+                            },
+                            onError: () => {
+                              toast({
+                                title: "Error",
+                                description: "Failed to send test reminder",
+                                variant: "destructive"
+                              });
+                            }
+                          });
+                        }}
+                        disabled={isSendingTest}
+                        data-testid="button-send-test-reminder"
+                      >
+                        <Send className="w-4 h-4" />
+                        {isSendingTest ? "Sending..." : "Send test reminder"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Entries List */}
         <div className="space-y-4">

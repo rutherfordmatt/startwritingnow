@@ -2,9 +2,10 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { api } from "@shared/routes";
+import { api, updateReminderSettingsSchema } from "@shared/routes";
 import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
+import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
 
 declare global {
   namespace Express {
@@ -77,6 +78,9 @@ export async function registerRoutes(
 
   // Seed data
   seedPrompts();
+  
+  // Start reminder scheduler
+  startReminderScheduler();
 
   // API Routes
   
@@ -139,6 +143,51 @@ export async function registerRoutes(
       return res.status(404).json({ message: "Entry not found" });
     }
     res.status(204).send();
+  });
+
+  // Reminder Settings Routes
+  
+  // Get Reminder Settings (Protected)
+  app.get(api.reminders.get.path, isAuthenticated, async (req, res) => {
+    const userId = req.user!.id;
+    const settings = await storage.getReminderSettings(userId);
+    if (!settings) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(settings);
+  });
+
+  // Update Reminder Settings (Protected)
+  app.patch(api.reminders.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const input = updateReminderSettingsSchema.parse(req.body);
+      const settings = await storage.updateReminderSettings(userId, input);
+      if (!settings) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(settings);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      console.error("Error updating reminder settings:", err);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+
+  // Send Test Reminder (Protected)
+  app.post(api.reminders.test.path, isAuthenticated, async (req, res) => {
+    const userId = req.user!.id;
+    const success = await sendTestReminder(userId);
+    if (success) {
+      res.json({ success: true, message: "Test reminder sent! Check your email." });
+    } else {
+      res.json({ success: false, message: "Failed to send. Make sure you have an email set." });
+    }
   });
 
   return httpServer;

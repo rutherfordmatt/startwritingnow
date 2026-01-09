@@ -38,10 +38,19 @@ Preferred communication style: Simple, everyday language.
 - **Protected Routes**: Authentication check via `isAuthenticated` middleware and client-side route guards
 
 ### Database Schema
-- **users**: User accounts with username and hashed password
+- **users**: User accounts with username, hashed password, and reminder preferences (email, reminderEnabled, reminderTime, reminderTimezone)
 - **sessions**: Authentication sessions
 - **prompts**: Writing prompts with categories (Life/Career)
 - **entries**: User journal entries with word count tracking
+
+### Email Reminders
+- **Service**: Resend API for transactional emails
+- **Scheduler**: node-cron runs every minute to check for users who should receive reminders
+- **Features**: 
+  - Users can enable/disable daily reminders in Dashboard
+  - Configurable reminder time and timezone
+  - Emails include a random writing prompt and link to the app
+  - Test reminder functionality to verify email delivery
 
 ## External Dependencies
 
@@ -57,6 +66,7 @@ Preferred communication style: Simple, everyday language.
 ### Required Environment Variables
 - `DATABASE_URL` - PostgreSQL connection string
 - `SESSION_SECRET` - Secret for session encryption (required, no default)
+- `RESEND_API_KEY` - Resend API key for sending reminder emails
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit` - Database ORM and migrations

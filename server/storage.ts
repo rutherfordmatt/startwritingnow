@@ -1,9 +1,16 @@
 import { db } from "./db";
 import { 
-  prompts, entries,
-  type InsertEntry, type Prompt, type Entry
+  prompts, entries, users,
+  type InsertEntry, type Prompt, type Entry, type User
 } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
+
+export interface ReminderSettings {
+  enabled: boolean;
+  time: string;
+  timezone: string;
+  email: string | null;
+}
 
 export interface IStorage {
   // Prompts
@@ -15,6 +22,10 @@ export interface IStorage {
   getUserEntries(userId: string): Promise<(Entry & { prompt: Prompt | null })[]>;
   deleteEntry(id: number, userId: string): Promise<boolean>;
   getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null }>;
+  
+  // Reminders
+  getReminderSettings(userId: string): Promise<ReminderSettings | undefined>;
+  updateReminderSettings(userId: string, settings: Partial<ReminderSettings>): Promise<ReminderSettings | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -137,6 +148,46 @@ export class DatabaseStorage implements IStorage {
       longestStreak,
       lastEntryDate: userEntries[0].createdAt.toISOString()
     };
+  }
+
+  // Reminders
+  async getReminderSettings(userId: string): Promise<ReminderSettings | undefined> {
+    const [user] = await db.select({
+      enabled: users.reminderEnabled,
+      time: users.reminderTime,
+      timezone: users.reminderTimezone,
+      email: users.email,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
+    
+    if (!user) return undefined;
+    
+    return {
+      enabled: user.enabled ?? false,
+      time: user.time ?? "09:00",
+      timezone: user.timezone ?? "America/New_York",
+      email: user.email,
+    };
+  }
+
+  async updateReminderSettings(userId: string, settings: Partial<ReminderSettings>): Promise<ReminderSettings | undefined> {
+    const updateData: Record<string, any> = {};
+    
+    if (settings.enabled !== undefined) updateData.reminderEnabled = settings.enabled;
+    if (settings.time !== undefined) updateData.reminderTime = settings.time;
+    if (settings.timezone !== undefined) updateData.reminderTimezone = settings.timezone;
+    if (settings.email !== undefined) updateData.email = settings.email;
+    
+    if (Object.keys(updateData).length === 0) {
+      return this.getReminderSettings(userId);
+    }
+    
+    await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, userId));
+    
+    return this.getReminderSettings(userId);
   }
 }
 
