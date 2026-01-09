@@ -7,7 +7,7 @@ import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
 
-const ADMIN_USERNAMES = ["matt,rutherford@gmail.com"];
+const ADMIN_USERNAMES = ["matt.rutherford@gmail.com"];
 
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated() || !req.user) {
