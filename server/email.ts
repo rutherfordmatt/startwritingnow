@@ -22,7 +22,7 @@ export async function sendReminderEmail({ to, username, prompt, appUrl }: Remind
   
   try {
     await resend.emails.send({
-      from: 'Journal Reminders <onboarding@resend.dev>',
+      from: 'startwriting.now <onboarding@resend.dev>',
       to: [to],
       subject: `${greeting} - Your Daily Journal Prompt`,
       html: `
@@ -50,7 +50,7 @@ export async function sendReminderEmail({ to, username, prompt, appUrl }: Remind
             </div>
             
             <p style="margin: 25px 0 0 0; color: #888; font-size: 14px; text-align: center;">
-              Take 5 minutes to reflect. Your future self will thank you.
+              Take 3 minutes to reflect. Your future self will thank you.
             </p>
           </div>
           
