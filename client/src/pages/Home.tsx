@@ -210,7 +210,7 @@ export default function Home() {
         </motion.div>
 
         {/* Footer */}
-        <footer className="mt-auto pt-12 pb-8 text-center">
+        <footer className="mt-auto pt-6 pb-8 text-center">
           <p className="text-sm text-muted-foreground/60">
             Created with Love by{" "}
             <a 
