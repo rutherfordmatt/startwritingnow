@@ -24,6 +24,10 @@ export const users = pgTable("users", {
   reminderEnabled: boolean("reminder_enabled").default(false),
   reminderTime: varchar("reminder_time").default("09:00"),
   reminderTimezone: varchar("reminder_timezone").default("America/New_York"),
+  isEmailVerified: boolean("is_email_verified").default(false),
+  emailVerificationToken: varchar("email_verification_token"),
+  emailVerificationExpires: timestamp("email_verification_expires"),
+  welcomeEmailSentAt: timestamp("welcome_email_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

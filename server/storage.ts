@@ -44,6 +44,13 @@ export interface IStorage {
   getReminderSettings(userId: string): Promise<ReminderSettings | undefined>;
   updateReminderSettings(userId: string, settings: Partial<ReminderSettings>): Promise<ReminderSettings | undefined>;
   
+  // Email Verification
+  setVerificationToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  verifyEmailByToken(token: string): Promise<{ success: boolean; userId?: string }>;
+  isEmailVerified(userId: string): Promise<boolean>;
+  markWelcomeEmailSent(userId: string): Promise<void>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  
   // Admin
   getAdminStats(): Promise<AdminStats>;
   getAllUsers(): Promise<AdminUser[]>;
@@ -209,6 +216,65 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
     
     return this.getReminderSettings(userId);
+  }
+
+  // Email Verification
+  async setVerificationToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await db.update(users)
+      .set({ 
+        emailVerificationToken: token,
+        emailVerificationExpires: expiresAt,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async verifyEmailByToken(token: string): Promise<{ success: boolean; userId?: string }> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.emailVerificationToken, token));
+    
+    if (!user) {
+      return { success: false };
+    }
+    
+    if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+      return { success: false };
+    }
+    
+    await db.update(users)
+      .set({ 
+        isEmailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, user.id));
+    
+    return { success: true, userId: user.id };
+  }
+
+  async isEmailVerified(userId: string): Promise<boolean> {
+    const [user] = await db.select({ isEmailVerified: users.isEmailVerified })
+      .from(users)
+      .where(eq(users.id, userId));
+    return user?.isEmailVerified ?? false;
+  }
+
+  async markWelcomeEmailSent(userId: string): Promise<void> {
+    await db.update(users)
+      .set({ 
+        welcomeEmailSentAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.email, email));
+    return user;
   }
 
   // Admin
