@@ -83,36 +83,41 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-50">
-        <div className="flex items-center gap-2">
-          <span className="font-serif font-bold text-xl tracking-tight">startwriting.now</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          {isAuthenticated ? (
-            <>
-              <Link href="/dashboard" className="inline-flex items-center justify-center rounded-full w-10 h-10 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" data-testid="link-dashboard">
-                <LayoutDashboard className="w-5 h-5" />
+      {/* Header */}
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <Link href="/" className="font-serif text-xl font-bold hover:text-primary transition-colors">
+            startwriting.now
+          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {isAuthenticated ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="ghost" size="icon" className="rounded-full" data-testid="link-dashboard">
+                    <LayoutDashboard className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => logout()}
+                  className="rounded-full hover:bg-destructive/10 hover:text-destructive"
+                  data-testid="button-logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <Link href="/auth" className="text-sm font-medium hover:text-primary transition-colors">
+                Log In
               </Link>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => logout()}
-                className="rounded-full w-10 h-10 hover:bg-destructive/10 hover:text-destructive"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </>
-          ) : (
-            <Link href="/auth" className="text-sm font-medium hover:text-primary transition-colors">
-              Log In
-            </Link>
-          )}
+            )}
+          </div>
         </div>
-      </nav>
+      </header>
 
-      <main className="w-full max-w-3xl mx-auto px-4 pt-24 pb-32 min-h-screen flex flex-col">
+      <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 min-h-screen flex flex-col">
         {/* Prompt Section */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
