@@ -1,11 +1,29 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { api, updateReminderSettingsSchema } from "@shared/routes";
 import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
+import { sendVerificationEmail, sendWelcomeEmail } from "./email";
+
+const APP_URL = process.env.REPLIT_DEV_DOMAIN 
+  ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+  : process.env.REPLIT_DEPLOYMENT_URL 
+    ? `https://${process.env.REPLIT_DEPLOYMENT_URL}`
+    : 'http://localhost:5000';
+
+function getDisplayName(user: { firstName?: string | null; username: string; email?: string | null }): string {
+  if (user.firstName) {
+    return user.firstName;
+  }
+  const emailOrUsername = user.email || user.username;
+  const localPart = emailOrUsername.split('@')[0];
+  const firstName = localPart.split(/[._-]/)[0];
+  return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+}
 
 const ADMIN_USERNAMES = ["matt.rutherford@gmail.com"];
 
@@ -218,6 +236,75 @@ export async function registerRoutes(
       createdAt: u.createdAt ? u.createdAt.toISOString() : null,
     }));
     res.json(usersWithFormattedDates);
+  });
+
+  // Email Verification Routes
+  
+  // Get verification status
+  app.get("/api/auth/email/status", isAuthenticated, async (req, res) => {
+    const userId = req.user!.id;
+    const isVerified = await storage.isEmailVerified(userId);
+    res.json({ isVerified });
+  });
+  
+  // Send/resend verification email
+  app.post("/api/auth/email/send-verification", isAuthenticated, async (req, res) => {
+    const userId = req.user!.id;
+    const settings = await storage.getReminderSettings(userId);
+    
+    if (!settings?.email) {
+      return res.status(400).json({ message: "No email address set. Please update your email in settings." });
+    }
+    
+    const isVerified = await storage.isEmailVerified(userId);
+    if (isVerified) {
+      return res.status(400).json({ message: "Email is already verified." });
+    }
+    
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    
+    await storage.setVerificationToken(userId, token, expiresAt);
+    
+    const verificationUrl = `${APP_URL}/verify-email?token=${token}`;
+    const success = await sendVerificationEmail({
+      to: settings.email,
+      username: getDisplayName({ username: req.user!.username, email: settings.email }),
+      verificationUrl,
+    });
+    
+    if (success) {
+      res.json({ success: true, message: "Verification email sent! Check your inbox." });
+    } else {
+      res.status(500).json({ success: false, message: "Failed to send verification email. Please try again." });
+    }
+  });
+  
+  // Verify email with token
+  app.post("/api/auth/email/verify", async (req, res) => {
+    const { token } = req.body;
+    
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ success: false, message: "Invalid token" });
+    }
+    
+    const result = await storage.verifyEmailByToken(token);
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: "Invalid or expired verification link." });
+    }
+    
+    const settings = await storage.getReminderSettings(result.userId!);
+    if (settings?.email) {
+      await sendWelcomeEmail({
+        to: settings.email,
+        username: getDisplayName({ username: settings.email, email: settings.email }),
+        appUrl: APP_URL,
+      });
+      await storage.markWelcomeEmailSent(result.userId!);
+    }
+    
+    res.json({ success: true, message: "Email verified successfully! Welcome aboard." });
   });
 
   return httpServer;
