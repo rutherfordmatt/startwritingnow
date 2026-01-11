@@ -211,7 +211,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="font-serif text-xl font-bold hover:text-primary transition-colors">
+          <Link href="/" className="font-serif text-2xl font-bold hover:text-primary transition-colors">
             startwriting.now
           </Link>
           <div className="flex items-center gap-2">
