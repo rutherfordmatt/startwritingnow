@@ -185,16 +185,27 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Textarea */}
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={handleStartTyping}
-              placeholder="Start typing to begin the timer..."
-              className="w-full min-h-[40vh] bg-transparent border-0 focus:ring-0 focus:outline-none text-xl md:text-2xl leading-relaxed resize-none placeholder:text-muted-foreground/30 selection:bg-primary/20 font-serif"
-              spellCheck={false}
-              data-testid="input-journal-entry"
-            />
+            {/* Textarea with animated cursor */}
+            <div className="relative">
+              {!content && (
+                <div className="absolute top-0 left-0 pointer-events-none flex items-center text-xl md:text-2xl font-serif text-muted-foreground/30">
+                  <motion.span
+                    className="inline-block w-[2px] h-[1.2em] bg-primary mr-1"
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "steps(2)" }}
+                  />
+                  Start typing to begin the timer...
+                </div>
+              )}
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={handleStartTyping}
+                className="w-full min-h-[40vh] bg-transparent border-0 focus:ring-0 focus:outline-none text-xl md:text-2xl leading-relaxed resize-none selection:bg-primary/20 font-serif"
+                spellCheck={false}
+                data-testid="input-journal-entry"
+              />
+            </div>
           </div>
         </motion.div>
       </main>
