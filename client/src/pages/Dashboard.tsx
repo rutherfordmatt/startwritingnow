@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useEntries, useStreak, useDeleteEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useReminderSettings, useUpdateReminderSettings, useSendTestReminder } from "@/hooks/use-reminders";
+import { useEmailVerificationStatus } from "@/hooks/use-email-verification";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { WritingCalendar } from "@/components/WritingCalendar";
+import { VerificationBanner } from "@/components/VerificationBanner";
 import { format } from "date-fns";
 import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,7 @@ export default function Dashboard() {
   const { data: reminderSettings, isLoading: reminderLoading } = useReminderSettings();
   const { mutate: updateReminders, isPending: isUpdatingReminders } = useUpdateReminderSettings();
   const { mutate: sendTestReminder, isPending: isSendingTest } = useSendTestReminder();
+  const { data: verificationStatus } = useEmailVerificationStatus();
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showReminderSettings, setShowReminderSettings] = useState(false);
@@ -256,6 +259,11 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        {/* Email Verification Banner */}
+        {reminderSettings?.email && verificationStatus && !verificationStatus.isVerified && (
+          <VerificationBanner email={reminderSettings.email} />
+        )}
+
         {/* Streak Cards */}
         <div className="grid grid-cols-3 gap-4 mb-10">
           <motion.div 
