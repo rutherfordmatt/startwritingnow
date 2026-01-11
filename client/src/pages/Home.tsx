@@ -208,6 +208,21 @@ export default function Home() {
             </div>
           </div>
         </motion.div>
+
+        {/* Footer */}
+        <footer className="mt-auto pt-12 pb-8 text-center">
+          <p className="text-sm text-muted-foreground/60">
+            Created with Love by{" "}
+            <a 
+              href="https://mattrutherford.co.uk" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
+              Matt Rutherford
+            </a>
+          </p>
+        </footer>
       </main>
     </div>
   );

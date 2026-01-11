@@ -600,6 +600,21 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Footer */}
+        <footer className="mt-16 pt-8 pb-4 text-center border-t border-border/30">
+          <p className="text-sm text-muted-foreground/60">
+            Created with Love by{" "}
+            <a 
+              href="https://mattrutherford.co.uk" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
+              Matt Rutherford
+            </a>
+          </p>
+        </footer>
       </main>
     </div>
   );
