@@ -212,9 +212,11 @@ export async function registerRoutes(
   // Send Test Reminder (Protected)
   app.post(api.reminders.test.path, isAuthenticated, async (req, res) => {
     const userId = req.user!.id;
-    const success = await sendTestReminder(userId);
-    if (success) {
+    const result = await sendTestReminder(userId);
+    if (result.success) {
       res.json({ success: true, message: "Test reminder sent! Check your email." });
+    } else if (result.reason === "not_verified") {
+      res.json({ success: false, message: "Please verify your email first to receive reminders." });
     } else {
       res.json({ success: false, message: "Failed to send. Make sure you have an email set." });
     }

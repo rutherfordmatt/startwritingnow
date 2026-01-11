@@ -35,6 +35,7 @@ async function sendReminders(): Promise<void> {
     .where(
       and(
         eq(users.reminderEnabled, true),
+        eq(users.isEmailVerified, true),
         isNotNull(users.email)
       )
     );
@@ -81,18 +82,24 @@ export function startReminderScheduler(): void {
   console.log('Reminder scheduler started - checking every minute');
 }
 
-export async function sendTestReminder(userId: string): Promise<boolean> {
+export async function sendTestReminder(userId: string): Promise<{ success: boolean; reason?: string }> {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   
   if (!user || !user.email) {
-    return false;
+    return { success: false, reason: "no_email" };
+  }
+  
+  if (!user.isEmailVerified) {
+    return { success: false, reason: "not_verified" };
   }
 
   const prompt = await getRandomPrompt();
-  return sendReminderEmail({
+  const sent = await sendReminderEmail({
     to: user.email,
     username: getDisplayName(user),
     prompt,
     appUrl: APP_URL,
   });
+  
+  return { success: sent };
 }
