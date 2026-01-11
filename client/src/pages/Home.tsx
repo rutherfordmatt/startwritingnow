@@ -117,7 +117,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 min-h-screen flex flex-col">
+      <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
         {/* Prompt Section */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -210,7 +210,7 @@ export default function Home() {
         </motion.div>
 
         {/* Footer */}
-        <footer className="mt-auto pt-6 pb-8 text-center">
+        <footer className="pt-6 pb-8 text-center">
           <p className="text-sm text-muted-foreground/60">
             Created with Love by{" "}
             <a 
