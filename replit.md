@@ -38,14 +38,21 @@ Preferred communication style: Simple, everyday language.
 - **Protected Routes**: Authentication check via `isAuthenticated` middleware and client-side route guards
 
 ### Database Schema
-- **users**: User accounts with username, hashed password, and reminder preferences (email, reminderEnabled, reminderTime, reminderTimezone)
+- **users**: User accounts with username, hashed password, reminder preferences, and email verification fields (isEmailVerified, emailVerificationToken, emailVerificationExpires, welcomeEmailSentAt)
 - **sessions**: Authentication sessions
 - **prompts**: Writing prompts with categories (Life/Career)
 - **entries**: User journal entries with word count tracking
 
+### Email Verification System
+- **Flow**: Users receive verification email on signup, must verify before enabling reminders
+- **Security**: Tokens use crypto.randomBytes(32), expire in 24 hours, cleared after verification
+- **Welcome Email**: Sent automatically after successful email verification
+- **UI**: Verification banner displayed on Dashboard until user verifies email
+
 ### Email Reminders
 - **Service**: Resend API for transactional emails
 - **Scheduler**: node-cron runs every minute to check for users who should receive reminders
+- **Requirements**: Users must have verified email to receive reminders
 - **Features**: 
   - Users can enable/disable daily reminders in Dashboard
   - Configurable reminder time and timezone
