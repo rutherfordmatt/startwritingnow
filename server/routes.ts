@@ -9,11 +9,23 @@ import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
 import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 
-const APP_URL = process.env.REPLIT_DEPLOYMENT_URL 
-  ? `https://${process.env.REPLIT_DEPLOYMENT_URL}`
-  : process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-    : 'http://localhost:5000';
+function getAppUrl(): string {
+  // In production, REPLIT_DOMAINS contains the deployed domain(s)
+  // REPLIT_DEV_DOMAIN is NOT available in production deployments
+  if (process.env.REPLIT_DOMAINS) {
+    const domains = process.env.REPLIT_DOMAINS.split(',');
+    // Prefer custom domain (non-replit.app), otherwise use first domain
+    const customDomain = domains.find(d => !d.includes('replit.dev'));
+    const domain = customDomain || domains[0];
+    return `https://${domain}`;
+  }
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  }
+  return 'http://localhost:5000';
+}
+
+const APP_URL = getAppUrl();
 
 function getDisplayName(user: { firstName?: string | null; username: string; email?: string | null }): string {
   if (user.firstName) {
