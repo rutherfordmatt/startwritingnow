@@ -192,7 +192,7 @@ export default function Home() {
                   <motion.span
                     className="inline-block w-[2px] h-[1.2em] bg-primary mr-1"
                     animate={{ opacity: [1, 0, 1] }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "steps(2)" }}
+                    transition={{ duration: 1, repeat: Infinity, times: [0, 0.5, 1] }}
                   />
                   Start typing to begin the timer...
                 </div>
