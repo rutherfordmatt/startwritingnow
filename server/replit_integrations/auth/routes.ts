@@ -74,18 +74,13 @@ export function registerAuthRoutes(app: Express): void {
   });
 
   app.post("/api/auth/logout", (req, res) => {
-    req.logout((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ message: "Logout failed" });
+    req.session.destroy((sessionErr) => {
+      if (sessionErr) {
+        console.error("Session destroy error:", sessionErr);
       }
-      req.session.destroy((sessionErr) => {
-        if (sessionErr) {
-          console.error("Session destroy error:", sessionErr);
-        }
-        res.clearCookie("connect.sid");
-        res.json({ message: "Logged out successfully" });
-      });
+      res.clearCookie("connect.sid", { path: "/" });
+      (req as any).user = null;
+      res.json({ message: "Logged out successfully" });
     });
   });
 
