@@ -14,6 +14,8 @@ export default function Auth() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [error, setError] = useState("");
   const [, setLocation] = useLocation();
   
@@ -30,6 +32,11 @@ export default function Auth() {
       return;
     }
 
+    if (!isLogin && (!email.trim() || !firstName.trim())) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     if (!isLogin && password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -40,11 +47,19 @@ export default function Auth() {
       return;
     }
 
+    if (!isLogin) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setError("Please enter a valid email address");
+        return;
+      }
+    }
+
     try {
       if (isLogin) {
         await login({ username, password });
       } else {
-        await register({ username, password });
+        await register({ username, password, email, firstName: firstName.trim() });
       }
       setLocation("/");
     } catch (err: any) {
@@ -113,18 +128,46 @@ export default function Auth() {
                 </div>
 
                 {!isLogin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={isLoading}
-                      data-testid="input-confirm-password"
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="Enter your first name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        disabled={isLoading}
+                        data-testid="input-first-name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isLoading}
+                        data-testid="input-email"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Confirm your password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={isLoading}
+                        data-testid="input-confirm-password"
+                      />
+                    </div>
+                  </>
                 )}
 
                 {error && (

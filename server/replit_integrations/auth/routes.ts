@@ -6,10 +6,10 @@ import { isAuthenticated } from "./localAuth";
 export function registerAuthRoutes(app: Express): void {
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, email, firstName } = req.body;
 
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
+      if (!username || !password || !email || !firstName) {
+        return res.status(400).json({ message: "Username, password, email, and first name are required" });
       }
 
       if (username.length < 3) {
@@ -20,19 +20,33 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(400).json({ message: "Password must be at least 6 characters" });
       }
 
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Please enter a valid email address" });
+      }
+
+      if (firstName.trim().length < 1) {
+        return res.status(400).json({ message: "First name is required" });
+      }
+
       const existingUser = await authStorage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already taken" });
       }
 
-      const user = await authStorage.createUser(username, password);
+      const existingEmail = await authStorage.getUserByEmail(email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+
+      const user = await authStorage.createUser(username, password, email, firstName.trim());
 
       req.login({ id: user.id, username: user.username }, (err) => {
         if (err) {
           console.error("Login error after registration:", err);
           return res.status(500).json({ message: "Registration successful but login failed" });
         }
-        res.status(201).json({ id: user.id, username: user.username });
+        res.status(201).json({ id: user.id, username: user.username, email: user.email, firstName: user.firstName });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -40,8 +54,8 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/auth/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: any, info: any) => {
+  app.post("/api/auth/login", async (req, res, next) => {
+    passport.authenticate("local", async (err: any, user: any, info: any) => {
       if (err) {
         return res.status(500).json({ message: "Login failed" });
       }
@@ -49,11 +63,22 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
 
+      const fullUser = await authStorage.getUser(user.id);
+      if (!fullUser) {
+        return res.status(500).json({ message: "Login failed" });
+      }
+
       req.login(user, (loginErr) => {
         if (loginErr) {
           return res.status(500).json({ message: "Login failed" });
         }
-        res.json({ id: user.id, username: user.username });
+        res.json({ 
+          id: fullUser.id, 
+          username: fullUser.username, 
+          email: fullUser.email,
+          firstName: fullUser.firstName,
+          lastName: fullUser.lastName
+        });
       });
     })(req, res, next);
   });

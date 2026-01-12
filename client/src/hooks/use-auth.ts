@@ -17,6 +17,8 @@ interface LoginCredentials {
 interface RegisterCredentials {
   username: string;
   password: string;
+  email: string;
+  firstName: string;
 }
 
 async function fetchUser(): Promise<User | null> {

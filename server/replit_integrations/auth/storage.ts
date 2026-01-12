@@ -8,7 +8,8 @@ const SALT_ROUNDS = 12;
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(username: string, password: string): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(username: string, password: string, email: string, firstName: string): Promise<User>;
   validatePassword(user: User, password: string): Promise<boolean>;
 }
 
@@ -26,13 +27,23 @@ class AuthStorage implements IAuthStorage {
     return user;
   }
 
-  async createUser(username: string, password: string): Promise<User> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(sql`LOWER(${users.email}) = LOWER(${email})`);
+    return user;
+  }
+
+  async createUser(username: string, password: string, email: string, firstName: string): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const [user] = await db
       .insert(users)
       .values({
         username,
         password: hashedPassword,
+        email,
+        firstName,
       })
       .returning();
     return user;
