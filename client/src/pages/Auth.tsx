@@ -88,23 +88,23 @@ export default function Auth() {
           <Card className="border-border/50">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-serif">
-                {isLogin ? "Welcome back" : "Create an account"}
+                {isLogin ? "Welcome back" : "Welcome! Let's get started"}
               </CardTitle>
               <CardDescription>
                 {isLogin 
-                  ? "Sign in to continue your writing journey" 
-                  : "Start capturing your thoughts today"}
+                  ? "Ready to write?" 
+                  : "Your daily writing practice begins here"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName">What should we call you?</Label>
                     <Input
                       id="firstName"
                       type="text"
-                      placeholder="Enter your first name"
+                      placeholder="Your first name"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       disabled={isLoading}
@@ -167,7 +167,7 @@ export default function Auth() {
                   data-testid="button-auth-submit"
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isLogin ? "Sign In" : "Create Account"}
+                  {isLogin ? "Sign In" : "Start Writing"}
                 </Button>
               </form>
 
@@ -182,8 +182,8 @@ export default function Auth() {
                   data-testid="button-toggle-auth-mode"
                 >
                   {isLogin 
-                    ? "Don't have an account? Sign up" 
-                    : "Already have an account? Sign in"}
+                    ? "New here? Create an account" 
+                    : "Welcome back? Sign in here"}
                 </button>
               </div>
             </CardContent>
