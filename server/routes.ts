@@ -9,10 +9,10 @@ import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
 import { sendVerificationEmail, sendWelcomeEmail } from "./email";
 
-const APP_URL = process.env.REPLIT_DEV_DOMAIN 
-  ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-  : process.env.REPLIT_DEPLOYMENT_URL 
-    ? `https://${process.env.REPLIT_DEPLOYMENT_URL}`
+const APP_URL = process.env.REPLIT_DEPLOYMENT_URL 
+  ? `https://${process.env.REPLIT_DEPLOYMENT_URL}`
+  : process.env.REPLIT_DEV_DOMAIN 
+    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
     : 'http://localhost:5000';
 
 function getDisplayName(user: { firstName?: string | null; username: string; email?: string | null }): string {
