@@ -37,25 +37,16 @@ function getDisplayName(user: { firstName?: string | null; username: string; ema
   return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 }
 
-const ADMIN_USERNAMES = ["matt.rutherford@gmail.com"];
+const ADMIN_EMAILS = ["matt.rutherford@gmail.com"];
 
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  if (!ADMIN_USERNAMES.includes(req.user.username)) {
+  if (!ADMIN_EMAILS.includes(req.user.email)) {
     return res.status(403).json({ message: "Forbidden - Admin access required" });
   }
   next();
-}
-
-declare global {
-  namespace Express {
-    interface User {
-      id: string;
-      username: string;
-    }
-  }
 }
 
 const SEED_PROMPTS = [
@@ -283,7 +274,7 @@ export async function registerRoutes(
     const verificationUrl = `${APP_URL}/verify-email?token=${token}`;
     const success = await sendVerificationEmail({
       to: settings.email,
-      username: getDisplayName({ username: req.user!.username, email: settings.email }),
+      username: getDisplayName({ username: settings.email, email: settings.email }),
       verificationUrl,
     });
     
