@@ -3,21 +3,19 @@ import { apiRequest } from "@/lib/queryClient";
 
 interface User {
   id: string;
-  username: string;
   email: string | null;
   firstName: string | null;
   lastName: string | null;
 }
 
 interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
 interface RegisterCredentials {
-  username: string;
-  password: string;
   email: string;
+  password: string;
   firstName: string;
 }
 

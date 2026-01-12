@@ -6,14 +6,10 @@ import { isAuthenticated } from "./localAuth";
 export function registerAuthRoutes(app: Express): void {
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, password, email, firstName } = req.body;
+      const { email, password, firstName } = req.body;
 
-      if (!username || !password || !email || !firstName) {
-        return res.status(400).json({ message: "Username, password, email, and first name are required" });
-      }
-
-      if (username.length < 3) {
-        return res.status(400).json({ message: "Username must be at least 3 characters" });
+      if (!email || !password || !firstName) {
+        return res.status(400).json({ message: "Email, password, and first name are required" });
       }
 
       if (password.length < 6) {
@@ -29,24 +25,19 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(400).json({ message: "First name is required" });
       }
 
-      const existingUser = await authStorage.getUserByUsername(username);
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already taken" });
-      }
-
       const existingEmail = await authStorage.getUserByEmail(email);
       if (existingEmail) {
         return res.status(400).json({ message: "Email already registered" });
       }
 
-      const user = await authStorage.createUser(username, password, email, firstName.trim());
+      const user = await authStorage.createUser(email, password, firstName.trim());
 
-      req.login({ id: user.id, username: user.username }, (err) => {
+      req.login({ id: user.id, email: user.email! }, (err) => {
         if (err) {
           console.error("Login error after registration:", err);
           return res.status(500).json({ message: "Registration successful but login failed" });
         }
-        res.status(201).json({ id: user.id, username: user.username, email: user.email, firstName: user.firstName });
+        res.status(201).json({ id: user.id, email: user.email, firstName: user.firstName });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -74,7 +65,6 @@ export function registerAuthRoutes(app: Express): void {
         }
         res.json({ 
           id: fullUser.id, 
-          username: fullUser.username, 
           email: fullUser.email,
           firstName: fullUser.firstName,
           lastName: fullUser.lastName
@@ -108,7 +98,6 @@ export function registerAuthRoutes(app: Express): void {
       }
       res.json({
         id: user.id,
-        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,

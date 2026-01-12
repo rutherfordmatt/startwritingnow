@@ -10,7 +10,7 @@ declare global {
   namespace Express {
     interface User {
       id: string;
-      username: string;
+      email: string;
     }
   }
 }
@@ -49,23 +49,26 @@ export async function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        const user = await authStorage.getUserByUsername(username);
-        if (!user) {
-          return done(null, false, { message: "Invalid username or password" });
-        }
+    new LocalStrategy(
+      { usernameField: 'email', passwordField: 'password' },
+      async (email, password, done) => {
+        try {
+          const user = await authStorage.getUserByEmail(email);
+          if (!user) {
+            return done(null, false, { message: "Invalid email or password" });
+          }
 
-        const isValid = await authStorage.validatePassword(user, password);
-        if (!isValid) {
-          return done(null, false, { message: "Invalid username or password" });
-        }
+          const isValid = await authStorage.validatePassword(user, password);
+          if (!isValid) {
+            return done(null, false, { message: "Invalid email or password" });
+          }
 
-        return done(null, { id: user.id, username: user.username });
-      } catch (error) {
-        return done(error);
+          return done(null, { id: user.id, email: user.email! });
+        } catch (error) {
+          return done(error);
+        }
       }
-    })
+    )
   );
 
   passport.serializeUser((user, done) => {
@@ -76,7 +79,7 @@ export async function setupAuth(app: Express) {
     try {
       const user = await authStorage.getUser(id);
       if (user) {
-        done(null, { id: user.id, username: user.username });
+        done(null, { id: user.id, email: user.email! });
       } else {
         done(null, false);
       }
