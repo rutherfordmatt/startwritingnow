@@ -20,7 +20,7 @@ export function getSession() {
     throw new Error("SESSION_SECRET environment variable is required");
   }
   
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const sessionTtl = 30 * 24 * 60 * 60 * 1000; // 30 days
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
@@ -33,6 +33,7 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Refresh session on each request to extend expiration for active users
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
