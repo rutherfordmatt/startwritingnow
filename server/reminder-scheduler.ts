@@ -10,8 +10,8 @@ function getAppUrl(): string {
   // REPLIT_DEV_DOMAIN is NOT available in production deployments
   if (process.env.REPLIT_DOMAINS) {
     const domains = process.env.REPLIT_DOMAINS.split(',');
-    // Prefer custom domain (non-replit.app), otherwise use first domain
-    const customDomain = domains.find(d => !d.includes('replit.dev'));
+    // Prefer custom domain (one that doesn't contain 'replit' at all)
+    const customDomain = domains.find(d => !d.includes('replit'));
     const domain = customDomain || domains[0];
     return `https://${domain}`;
   }
