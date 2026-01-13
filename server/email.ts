@@ -32,7 +32,7 @@ interface WelcomeEmailData {
 export async function sendVerificationEmail({ to, username, verificationUrl }: VerificationEmailData): Promise<boolean> {
   try {
     await resend.emails.send({
-      from: 'startwriting.now <onboarding@resend.dev>',
+      from: 'startwriting.now <noreply@startwriting.now>',
       to: [to],
       subject: 'Verify your email - startwriting.now',
       html: `
@@ -78,7 +78,7 @@ export async function sendVerificationEmail({ to, username, verificationUrl }: V
 export async function sendWelcomeEmail({ to, username, appUrl }: WelcomeEmailData): Promise<boolean> {
   try {
     await resend.emails.send({
-      from: 'startwriting.now <onboarding@resend.dev>',
+      from: 'startwriting.now <noreply@startwriting.now>',
       to: [to],
       subject: 'Welcome to startwriting.now!',
       html: `
@@ -136,7 +136,7 @@ export async function sendReminderEmail({ to, username, prompt, appUrl }: Remind
   
   try {
     await resend.emails.send({
-      from: 'startwriting.now <onboarding@resend.dev>',
+      from: 'startwriting.now <noreply@startwriting.now>',
       to: [to],
       subject: `${greeting} - Your Daily Journal Prompt`,
       html: `
