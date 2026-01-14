@@ -1,19 +1,23 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useRandomPrompt, useCreateEntry, usePromptById } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
+import { useWordGoalSettings, useTodayWordCount } from "@/hooks/use-word-goal";
 import { PromptCard, type PromptCategory } from "@/components/PromptCard";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation, useSearch } from "wouter";
-import { LogOut, BarChart3, ChevronRight, Check } from "lucide-react";
+import { LogOut, BarChart3, ChevronRight, Check, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
 import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 
 export default function Home() {
   const { user, logout, isAuthenticated } = useAuth();
+  const { data: wordGoalSettings } = useWordGoalSettings();
+  const { data: todayProgress } = useTodayWordCount();
   const [category, setCategory] = useState<PromptCategory>("Life");
   const search = useSearch();
   const [useUrlPrompt, setUseUrlPrompt] = useState(true);
@@ -183,9 +187,24 @@ export default function Home() {
               />
               
               <div className="flex items-center gap-3">
-                <span className="text-xs font-mono text-muted-foreground">
-                  {wordCount} words
-                </span>
+                {isAuthenticated && wordGoalSettings?.dailyWordGoal ? (
+                  <div className="flex items-center gap-2">
+                    <Target className="w-3 h-3 text-muted-foreground" />
+                    <div className="w-24">
+                      <Progress 
+                        value={Math.min(100, ((todayProgress || 0) / wordGoalSettings.dailyWordGoal) * 100)} 
+                        className="h-2"
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {todayProgress || 0}/{wordGoalSettings.dailyWordGoal}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {wordCount} words
+                  </span>
+                )}
                 <AnimatePresence mode="wait">
                   {hasStarted && wordCount >= 5 && (
                     <motion.div

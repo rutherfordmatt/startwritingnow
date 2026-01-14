@@ -14,6 +14,19 @@ export function useWordGoalSettings() {
   });
 }
 
+export function useTodayWordCount() {
+  return useQuery<number>({
+    queryKey: [api.wordGoal.get.path, 'todayCount'],
+    queryFn: async () => {
+      const res = await fetch(api.wordGoal.get.path, { credentials: "include" });
+      if (res.status === 401) return 0;
+      if (!res.ok) throw new Error("Failed to fetch today's word count");
+      const data = await res.json();
+      return data.todayWordCount || 0;
+    },
+  });
+}
+
 export function useUpdateWordGoal() {
   return useMutation({
     mutationFn: async (settings: UpdateWordGoal) => {

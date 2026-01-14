@@ -56,7 +56,7 @@ export function useCreateEntry() {
   });
 }
 
-export function useRandomPrompt(category?: 'Life' | 'Career' | null) {
+export function useRandomPrompt(category?: 'Life' | 'Career' | 'Creativity' | 'Gratitude' | 'Mindfulness' | null) {
   return useQuery({
     queryKey: [api.prompts.random.path, category],
     queryFn: async () => {
