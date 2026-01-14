@@ -9,7 +9,7 @@ import { WritingCalendar } from "@/components/WritingCalendar";
 import { VerificationBanner } from "@/components/VerificationBanner";
 import { format } from "date-fns";
 import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
-import { SiX, SiLinkedin } from "react-icons/si";
+import { SiX, SiFacebook, SiThreads, SiBluesky } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -109,15 +109,25 @@ export default function Dashboard() {
     }
   };
 
+  const shareToFacebook = (type: 'streak' | 'entries' | 'best') => {
+    const url = encodeURIComponent(window.location.origin);
+    const quote = encodeURIComponent(getShareText(type));
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, '_blank', 'width=550,height=420');
+  };
+
+  const shareToThreads = (type: 'streak' | 'entries' | 'best') => {
+    const text = encodeURIComponent(getShareText(type));
+    window.open(`https://www.threads.net/intent/post?text=${text}`, '_blank', 'width=550,height=420');
+  };
+
+  const shareToBluesky = (type: 'streak' | 'entries' | 'best') => {
+    const text = encodeURIComponent(getShareText(type));
+    window.open(`https://bsky.app/intent/compose?text=${text}`, '_blank', 'width=550,height=420');
+  };
+
   const shareToTwitter = (type: 'streak' | 'entries' | 'best') => {
     const text = encodeURIComponent(getShareText(type));
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'width=550,height=420');
-  };
-
-  const shareToLinkedIn = (type: 'streak' | 'entries' | 'best') => {
-    const text = encodeURIComponent(getShareText(type));
-    const url = encodeURIComponent(window.location.origin);
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${text}`, '_blank', 'width=550,height=420');
   };
 
   const handleExportJSON = () => {
@@ -340,13 +350,21 @@ export default function Dashboard() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => shareToFacebook('streak')} className="gap-2" data-testid="button-share-streak-facebook">
+                  <SiFacebook className="w-4 h-4" />
+                  Share on Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToThreads('streak')} className="gap-2" data-testid="button-share-streak-threads">
+                  <SiThreads className="w-4 h-4" />
+                  Share on Threads
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToBluesky('streak')} className="gap-2" data-testid="button-share-streak-bluesky">
+                  <SiBluesky className="w-4 h-4" />
+                  Share on Bluesky
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => shareToTwitter('streak')} className="gap-2" data-testid="button-share-streak-twitter">
                   <SiX className="w-4 h-4" />
                   Share on X
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => shareToLinkedIn('streak')} className="gap-2" data-testid="button-share-streak-linkedin">
-                  <SiLinkedin className="w-4 h-4" />
-                  Share on LinkedIn
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -376,13 +394,21 @@ export default function Dashboard() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => shareToFacebook('entries')} className="gap-2" data-testid="button-share-entries-facebook">
+                  <SiFacebook className="w-4 h-4" />
+                  Share on Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToThreads('entries')} className="gap-2" data-testid="button-share-entries-threads">
+                  <SiThreads className="w-4 h-4" />
+                  Share on Threads
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToBluesky('entries')} className="gap-2" data-testid="button-share-entries-bluesky">
+                  <SiBluesky className="w-4 h-4" />
+                  Share on Bluesky
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => shareToTwitter('entries')} className="gap-2" data-testid="button-share-entries-twitter">
                   <SiX className="w-4 h-4" />
                   Share on X
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => shareToLinkedIn('entries')} className="gap-2" data-testid="button-share-entries-linkedin">
-                  <SiLinkedin className="w-4 h-4" />
-                  Share on LinkedIn
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -412,13 +438,21 @@ export default function Dashboard() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => shareToFacebook('best')} className="gap-2" data-testid="button-share-best-facebook">
+                  <SiFacebook className="w-4 h-4" />
+                  Share on Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToThreads('best')} className="gap-2" data-testid="button-share-best-threads">
+                  <SiThreads className="w-4 h-4" />
+                  Share on Threads
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToBluesky('best')} className="gap-2" data-testid="button-share-best-bluesky">
+                  <SiBluesky className="w-4 h-4" />
+                  Share on Bluesky
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => shareToTwitter('best')} className="gap-2" data-testid="button-share-best-twitter">
                   <SiX className="w-4 h-4" />
                   Share on X
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => shareToLinkedIn('best')} className="gap-2" data-testid="button-share-best-linkedin">
-                  <SiLinkedin className="w-4 h-4" />
-                  Share on LinkedIn
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
