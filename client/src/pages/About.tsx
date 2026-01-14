@@ -42,7 +42,7 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
-      <header className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <header className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center gap-2 cursor-pointer">
             <img src={logoBlack} alt="startwriting.now" className="h-8 dark:hidden" />
@@ -54,7 +54,7 @@ export default function About() {
         </div>
       </header>
 
-      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-12">
+      <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
