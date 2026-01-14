@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import logoBlack from "@assets/snwlogo_black_1768413266371.png";
+import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -74,7 +76,8 @@ export default function Auth() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <nav className="fixed top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-50">
         <div className="flex items-center gap-2">
-          <span className="font-serif font-bold text-xl tracking-tight">startwriting.now</span>
+          <img src={logoBlack} alt="startwriting.now" className="h-8 dark:hidden" />
+          <img src={logoWhite} alt="startwriting.now" className="h-8 hidden dark:block" />
         </div>
         <ThemeToggle />
       </nav>

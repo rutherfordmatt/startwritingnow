@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
+import logoBlack from "@assets/snwlogo_black_1768413266371.png";
+import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 import { useToast } from "@/hooks/use-toast";
 import { jsPDF } from "jspdf";
 import {
@@ -211,8 +213,9 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="font-serif text-2xl font-bold hover:text-primary transition-colors">
-            startwriting.now
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <img src={logoBlack} alt="startwriting.now" className="h-8 dark:hidden" />
+            <img src={logoWhite} alt="startwriting.now" className="h-8 hidden dark:block" />
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
