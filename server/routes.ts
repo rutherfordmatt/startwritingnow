@@ -139,14 +139,25 @@ const SEED_PROMPTS = [
 async function seedPrompts() {
   const existing = await storage.getRandomPrompt();
   if (!existing) {
-    console.log("Seeding prompts...");
+    console.log("Seeding all prompts...");
     for (const prompt of SEED_PROMPTS) {
       await storage.createPrompt(prompt.content, prompt.category);
     }
-    // Add even more prompts to reach 100+ would be done here in a real app
-    // For now, I'll duplicate the list with slight variations or just loop to simulate volume
-    // But 30 is good for a start.
     console.log("Prompts seeded.");
+  } else {
+    // Check if new categories need to be added (for existing databases)
+    const categories = ['Creativity', 'Gratitude', 'Mindfulness'];
+    for (const category of categories) {
+      const categoryPrompt = await storage.getRandomPrompt(category);
+      if (!categoryPrompt) {
+        console.log(`Seeding ${category} prompts...`);
+        const categoryPrompts = SEED_PROMPTS.filter(p => p.category === category);
+        for (const prompt of categoryPrompts) {
+          await storage.createPrompt(prompt.content, prompt.category);
+        }
+        console.log(`${category} prompts seeded.`);
+      }
+    }
   }
 }
 
