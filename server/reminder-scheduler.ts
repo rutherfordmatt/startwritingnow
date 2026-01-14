@@ -3,7 +3,7 @@ import { db } from './db';
 import { users, prompts } from '@shared/schema';
 import { eq, and, isNotNull } from 'drizzle-orm';
 import { sendReminderEmail } from './email';
-import { toZonedTime, format } from 'date-fns-tz';
+import { format } from 'date-fns-tz';
 
 function getAppUrl(): string {
   // In production, REPLIT_DOMAINS contains the deployed domain(s)
@@ -62,8 +62,8 @@ async function sendReminders(): Promise<void> {
     if (!user.email || !user.reminderTime || !user.reminderTimezone) continue;
     
     try {
-      const userLocalTime = toZonedTime(now, user.reminderTimezone);
-      const userCurrentTime = format(userLocalTime, 'HH:mm', { timeZone: user.reminderTimezone });
+      // Format current UTC time directly to user's timezone - no double conversion
+      const userCurrentTime = format(now, 'HH:mm', { timeZone: user.reminderTimezone });
       
       if (userCurrentTime === user.reminderTime) {
         const prompt = await getRandomPrompt();
