@@ -257,7 +257,12 @@ export default function Home() {
         </motion.div>
 
         {/* Footer */}
-        <footer className="pt-6 pb-8 text-center">
+        <footer className="pt-6 pb-8 text-center space-y-2">
+          <p className="text-sm text-muted-foreground/60">
+            <Link href="/about" className="hover:text-foreground transition-colors">
+              About
+            </Link>
+          </p>
           <p className="text-sm text-muted-foreground/60">
             Created with Love by{" "}
             <a 

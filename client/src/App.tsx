@@ -14,6 +14,7 @@ import Dashboard from "@/pages/Dashboard";
 import Auth from "@/pages/Auth";
 import Admin from "@/pages/Admin";
 import VerifyEmail from "@/pages/VerifyEmail";
+import About from "@/pages/About";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -39,6 +40,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/about" component={About} />
       <Route path="/auth" component={Auth} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
