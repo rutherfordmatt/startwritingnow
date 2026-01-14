@@ -3,7 +3,7 @@ import type { Server } from "http";
 import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { api, updateReminderSettingsSchema } from "@shared/routes";
+import { api, updateReminderSettingsSchema, updateWordGoalSchema } from "@shared/routes";
 import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
@@ -61,7 +61,6 @@ const SEED_PROMPTS = [
   { category: "Life", content: "Describe your favorite place in the world." },
   { category: "Life", content: "What made you laugh today?" },
   { category: "Life", content: "What is a lesson you learned the hard way?" },
-  // ... adding more to reach ~20
   { category: "Life", content: "How do you recharge your energy?" },
   { category: "Life", content: "What is a book or movie that changed your perspective?" },
   { category: "Life", content: "What is something you are looking forward to?" },
@@ -79,12 +78,62 @@ const SEED_PROMPTS = [
   { category: "Career", content: "What is the best career advice you ever received?" },
   { category: "Career", content: "How do you handle stress at work?" },
   { category: "Career", content: "What is a project you are excited about?" },
-  // ... adding more
   { category: "Career", content: "What is a mistake you made at work and what did you learn?" },
   { category: "Career", content: "How do you balance work and personal life?" },
   { category: "Career", content: "What is your dream job?" },
   { category: "Career", content: "What value do you bring to your team?" },
   { category: "Career", content: "How do you prefer to receive feedback?" },
+
+  // Creativity
+  { category: "Creativity", content: "If you could create anything without limitations, what would it be?" },
+  { category: "Creativity", content: "Describe a color without using its name." },
+  { category: "Creativity", content: "What does your inner world look like?" },
+  { category: "Creativity", content: "Write about an ordinary object as if seeing it for the first time." },
+  { category: "Creativity", content: "If your emotions were a landscape, what would you see?" },
+  { category: "Creativity", content: "What would you build if you had unlimited resources?" },
+  { category: "Creativity", content: "Describe a sound that makes you feel alive." },
+  { category: "Creativity", content: "If you could live inside any artwork, which would you choose?" },
+  { category: "Creativity", content: "Write a letter to your future creative self." },
+  { category: "Creativity", content: "What inspires you to create?" },
+  { category: "Creativity", content: "Describe your perfect creative sanctuary." },
+  { category: "Creativity", content: "If your life were a movie, what genre would it be?" },
+  { category: "Creativity", content: "What would you make if no one would ever see it?" },
+  { category: "Creativity", content: "Describe the texture of your favorite memory." },
+  { category: "Creativity", content: "What story is waiting to be told through you?" },
+
+  // Gratitude
+  { category: "Gratitude", content: "What are three things you're grateful for today?" },
+  { category: "Gratitude", content: "Who made a difference in your life recently?" },
+  { category: "Gratitude", content: "What simple pleasure brought you joy this week?" },
+  { category: "Gratitude", content: "What part of your daily routine are you thankful for?" },
+  { category: "Gratitude", content: "Name something about your body you appreciate." },
+  { category: "Gratitude", content: "What challenge helped you grow?" },
+  { category: "Gratitude", content: "What technology are you grateful exists?" },
+  { category: "Gratitude", content: "Who believed in you when you needed it most?" },
+  { category: "Gratitude", content: "What skill do you have that you're thankful for?" },
+  { category: "Gratitude", content: "What memory always makes you smile?" },
+  { category: "Gratitude", content: "What about your home brings you comfort?" },
+  { category: "Gratitude", content: "What opportunity are you grateful for?" },
+  { category: "Gratitude", content: "What lesson are you thankful to have learned?" },
+  { category: "Gratitude", content: "What in nature fills you with wonder?" },
+  { category: "Gratitude", content: "Who has shown you kindness recently?" },
+
+  // Mindfulness
+  { category: "Mindfulness", content: "What are you feeling right now, in this moment?" },
+  { category: "Mindfulness", content: "Describe five things you can see around you." },
+  { category: "Mindfulness", content: "What does your breath feel like right now?" },
+  { category: "Mindfulness", content: "What is your body telling you today?" },
+  { category: "Mindfulness", content: "What thought keeps returning to your mind?" },
+  { category: "Mindfulness", content: "Describe the present moment without judgment." },
+  { category: "Mindfulness", content: "What can you hear if you listen carefully?" },
+  { category: "Mindfulness", content: "How does stillness feel to you?" },
+  { category: "Mindfulness", content: "What would letting go look like for you?" },
+  { category: "Mindfulness", content: "What are you holding onto that no longer serves you?" },
+  { category: "Mindfulness", content: "Describe the space between your thoughts." },
+  { category: "Mindfulness", content: "What brings you back to the present moment?" },
+  { category: "Mindfulness", content: "How are you truly, beyond 'fine' or 'good'?" },
+  { category: "Mindfulness", content: "What would self-compassion look like today?" },
+  { category: "Mindfulness", content: "If this moment were enough, what would change?" },
 ];
 
 async function seedPrompts() {
@@ -235,6 +284,40 @@ export async function registerRoutes(
       res.json({ success: false, message: "Please verify your email first to receive reminders." });
     } else {
       res.json({ success: false, message: "Failed to send. Make sure you have an email set." });
+    }
+  });
+
+  // Word Goal Routes
+  
+  // Get Word Goal Settings (Protected)
+  app.get(api.wordGoal.get.path, isAuthenticated, async (req, res) => {
+    const userId = req.user!.id;
+    const settings = await storage.getWordGoalSettings(userId);
+    if (!settings) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(settings);
+  });
+
+  // Update Word Goal (Protected)
+  app.patch(api.wordGoal.update.path, isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const input = updateWordGoalSchema.parse(req.body);
+      const settings = await storage.updateWordGoal(userId, input.dailyWordGoal);
+      if (!settings) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(settings);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      console.error("Error updating word goal:", err);
+      res.status(500).json({ message: "Internal Server Error" });
     }
   });
 

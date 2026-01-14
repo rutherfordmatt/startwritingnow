@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useEntries, useStreak, useDeleteEntry, useDeleteAccount } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useReminderSettings, useUpdateReminderSettings, useSendTestReminder } from "@/hooks/use-reminders";
+import { useWordGoalSettings, useUpdateWordGoal } from "@/hooks/use-word-goal";
 import { useEmailVerificationStatus } from "@/hooks/use-email-verification";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { WritingCalendar } from "@/components/WritingCalendar";
 import { VerificationBanner } from "@/components/VerificationBanner";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle } from "lucide-react";
+import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
+import { SiX, SiLinkedin } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -70,16 +72,53 @@ export default function Dashboard() {
   const { mutate: updateReminders, isPending: isUpdatingReminders } = useUpdateReminderSettings();
   const { mutate: sendTestReminder, isPending: isSendingTest } = useSendTestReminder();
   const { data: verificationStatus } = useEmailVerificationStatus();
+  const { data: wordGoalSettings } = useWordGoalSettings();
+  const { mutate: updateWordGoal, isPending: isUpdatingWordGoal } = useUpdateWordGoal();
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showReminderSettings, setShowReminderSettings] = useState(false);
+  const [showWordGoalSettings, setShowWordGoalSettings] = useState(false);
   const [emailInput, setEmailInput] = useState("");
+  const [wordGoalInput, setWordGoalInput] = useState("");
   
   useEffect(() => {
     if (reminderSettings?.email) {
       setEmailInput(reminderSettings.email);
     }
   }, [reminderSettings?.email]);
+  
+  useEffect(() => {
+    if (wordGoalSettings?.dailyWordGoal) {
+      setWordGoalInput(String(wordGoalSettings.dailyWordGoal));
+    }
+  }, [wordGoalSettings?.dailyWordGoal]);
+  
+  const wordGoalProgress = wordGoalSettings?.dailyWordGoal 
+    ? Math.min(100, (wordGoalSettings.todayWordCount / wordGoalSettings.dailyWordGoal) * 100)
+    : 0;
+
+  const getShareText = (type: 'streak' | 'entries' | 'best') => {
+    const appUrl = window.location.origin;
+    switch (type) {
+      case 'streak':
+        return `I'm on a ${streak?.currentStreak || 0} day writing streak with startwriting.now! Building my daily writing habit one prompt at a time. ${appUrl}`;
+      case 'entries':
+        return `I've written ${entries?.length || 0} journal entries with startwriting.now! Journaling has become my daily superpower. ${appUrl}`;
+      case 'best':
+        return `My best writing streak is ${streak?.longestStreak || 0} days with startwriting.now! Celebrating the power of consistent writing. ${appUrl}`;
+    }
+  };
+
+  const shareToTwitter = (type: 'streak' | 'entries' | 'best') => {
+    const text = encodeURIComponent(getShareText(type));
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'width=550,height=420');
+  };
+
+  const shareToLinkedIn = (type: 'streak' | 'entries' | 'best') => {
+    const text = encodeURIComponent(getShareText(type));
+    const url = encodeURIComponent(window.location.origin);
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${text}`, '_blank', 'width=550,height=420');
+  };
 
   const handleExportJSON = () => {
     if (!entries) return;
@@ -287,8 +326,30 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm text-center"
+            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm text-center relative group"
           >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                  data-testid="button-share-streak"
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => shareToTwitter('streak')} className="gap-2" data-testid="button-share-streak-twitter">
+                  <SiX className="w-4 h-4" />
+                  Share on X
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToLinkedIn('streak')} className="gap-2" data-testid="button-share-streak-linkedin">
+                  <SiLinkedin className="w-4 h-4" />
+                  Share on LinkedIn
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="inline-flex p-3 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/30 mb-3">
               <Flame className="w-5 h-5" />
             </div>
@@ -301,8 +362,30 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm text-center"
+            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm text-center relative group"
           >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                  data-testid="button-share-entries"
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => shareToTwitter('entries')} className="gap-2" data-testid="button-share-entries-twitter">
+                  <SiX className="w-4 h-4" />
+                  Share on X
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToLinkedIn('entries')} className="gap-2" data-testid="button-share-entries-linkedin">
+                  <SiLinkedin className="w-4 h-4" />
+                  Share on LinkedIn
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="inline-flex p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 mb-3">
               <BookOpen className="w-5 h-5" />
             </div>
@@ -315,8 +398,30 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm text-center"
+            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm text-center relative group"
           >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                  data-testid="button-share-best"
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => shareToTwitter('best')} className="gap-2" data-testid="button-share-best-twitter">
+                  <SiX className="w-4 h-4" />
+                  Share on X
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => shareToLinkedIn('best')} className="gap-2" data-testid="button-share-best-linkedin">
+                  <SiLinkedin className="w-4 h-4" />
+                  Share on LinkedIn
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="inline-flex p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 mb-3">
               <Calendar className="w-5 h-5" />
             </div>
@@ -492,6 +597,141 @@ export default function Dashboard() {
                         <Send className="w-4 h-4" />
                         {isSendingTest ? "Sending..." : "Send test reminder"}
                       </Button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Word Goal Settings Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-5 shadow-sm mb-10"
+        >
+          <button
+            onClick={() => setShowWordGoalSettings(!showWordGoalSettings)}
+            className="w-full flex items-center justify-between"
+            data-testid="button-toggle-word-goal"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30">
+                <Target className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-medium text-foreground">Daily Word Goal</h3>
+                <p className="text-sm text-muted-foreground">
+                  {wordGoalSettings?.dailyWordGoal 
+                    ? `${wordGoalSettings.todayWordCount}/${wordGoalSettings.dailyWordGoal} words today` 
+                    : "Set a target to stay motivated"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {wordGoalSettings?.dailyWordGoal && (
+                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-amber-500 transition-all duration-500"
+                    style={{ width: `${wordGoalProgress}%` }}
+                  />
+                </div>
+              )}
+              <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${showWordGoalSettings ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+
+          <AnimatePresence>
+            {showWordGoalSettings && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-5 mt-5 border-t border-border/30 space-y-5">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="word-goal-input" className="font-medium">Daily word target</Label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        id="word-goal-input"
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 100"
+                        value={wordGoalInput}
+                        onChange={(e) => setWordGoalInput(e.target.value)}
+                        data-testid="input-word-goal"
+                        className="max-w-[150px]"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const goal = wordGoalInput ? parseInt(wordGoalInput) : null;
+                          updateWordGoal({ dailyWordGoal: goal }, {
+                            onSuccess: () => {
+                              toast({ 
+                                title: goal ? "Goal set!" : "Goal cleared",
+                                description: goal ? `Aim for ${goal} words each day.` : "No daily word goal set."
+                              });
+                            }
+                          });
+                        }}
+                        disabled={isUpdatingWordGoal}
+                        data-testid="button-save-word-goal"
+                      >
+                        {isUpdatingWordGoal ? "Saving..." : "Save"}
+                      </Button>
+                      {wordGoalSettings?.dailyWordGoal && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setWordGoalInput("");
+                            updateWordGoal({ dailyWordGoal: null }, {
+                              onSuccess: () => {
+                                toast({ 
+                                  title: "Goal cleared",
+                                  description: "No daily word goal set."
+                                });
+                              }
+                            });
+                          }}
+                          disabled={isUpdatingWordGoal}
+                          data-testid="button-clear-word-goal"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Set a daily word count target to track your writing progress
+                    </p>
+                  </div>
+
+                  {wordGoalSettings?.dailyWordGoal && (
+                    <div className="pt-2 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Today's progress</span>
+                        <span className="font-medium">
+                          {wordGoalSettings.todayWordCount} / {wordGoalSettings.dailyWordGoal} words
+                          {wordGoalProgress >= 100 && " - Goal reached!"}
+                        </span>
+                      </div>
+                      <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                        <motion.div 
+                          className={`h-full ${wordGoalProgress >= 100 ? 'bg-green-500' : 'bg-amber-500'}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${wordGoalProgress}%` }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

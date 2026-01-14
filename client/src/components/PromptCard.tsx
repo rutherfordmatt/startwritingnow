@@ -4,12 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { type Prompt } from "@shared/schema";
 import { motion, AnimatePresence } from "framer-motion";
 
+export type PromptCategory = "Life" | "Career" | "Creativity" | "Gratitude" | "Mindfulness";
+
 interface PromptCardProps {
   prompt: Prompt | undefined;
   isLoading: boolean;
   onRefresh: () => void;
-  category: "Life" | "Career";
-  onCategoryChange: (category: "Life" | "Career") => void;
+  category: PromptCategory;
+  onCategoryChange: (category: PromptCategory) => void;
 }
 
 export function PromptCard({ 
@@ -22,16 +24,17 @@ export function PromptCard({
   return (
     <div className="w-full">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-full">
-          {(["Life", "Career"] as const).map((cat) => (
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-full overflow-x-auto">
+          {(["Life", "Career", "Creativity", "Gratitude", "Mindfulness"] as const).map((cat) => (
             <button
               key={cat}
               onClick={() => onCategoryChange(cat)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                 category === cat
                   ? "bg-white dark:bg-zinc-800 text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
+              data-testid={`button-category-${cat.toLowerCase()}`}
             >
               {cat}
             </button>

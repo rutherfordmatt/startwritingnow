@@ -3,7 +3,7 @@ import {
   prompts, entries, users,
   type InsertEntry, type Prompt, type Entry, type User
 } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface ReminderSettings {
   enabled: boolean;
@@ -31,6 +31,11 @@ export interface AdminStats {
   totalEntries: number;
 }
 
+export interface WordGoalSettings {
+  dailyWordGoal: number | null;
+  todayWordCount: number;
+}
+
 export interface IStorage {
   // Prompts
   getRandomPrompt(category?: string): Promise<Prompt | undefined>;
@@ -46,6 +51,11 @@ export interface IStorage {
   // Reminders
   getReminderSettings(userId: string): Promise<ReminderSettings | undefined>;
   updateReminderSettings(userId: string, settings: Partial<ReminderSettings>): Promise<ReminderSettings | undefined>;
+  
+  // Word Goal
+  getWordGoalSettings(userId: string): Promise<WordGoalSettings | undefined>;
+  updateWordGoal(userId: string, dailyWordGoal: number | null): Promise<WordGoalSettings | undefined>;
+  getTodayWordCount(userId: string): Promise<number>;
   
   // Email Verification
   setVerificationToken(userId: string, token: string, expiresAt: Date): Promise<void>;
@@ -349,6 +359,48 @@ export class DatabaseStorage implements IStorage {
   async deleteUserEntries(userId: string): Promise<number> {
     const result = await db.delete(entries).where(eq(entries.userId, userId)).returning();
     return result.length;
+  }
+
+  // Word Goal
+  async getTodayWordCount(userId: string): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayEntries = await db.select({ wordCount: entries.wordCount })
+      .from(entries)
+      .where(
+        and(
+          eq(entries.userId, userId),
+          sql`${entries.createdAt} >= ${today} AND ${entries.createdAt} < ${tomorrow}`
+        )
+      );
+    
+    return todayEntries.reduce((sum, entry) => sum + entry.wordCount, 0);
+  }
+
+  async getWordGoalSettings(userId: string): Promise<WordGoalSettings | undefined> {
+    const [user] = await db.select({ dailyWordGoal: users.dailyWordGoal })
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    if (!user) return undefined;
+    
+    const todayWordCount = await this.getTodayWordCount(userId);
+    
+    return {
+      dailyWordGoal: user.dailyWordGoal,
+      todayWordCount,
+    };
+  }
+
+  async updateWordGoal(userId: string, dailyWordGoal: number | null): Promise<WordGoalSettings | undefined> {
+    await db.update(users)
+      .set({ dailyWordGoal, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    
+    return this.getWordGoalSettings(userId);
   }
 }
 

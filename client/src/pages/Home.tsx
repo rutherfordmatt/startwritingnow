@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useRandomPrompt, useCreateEntry, usePromptById } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
-import { PromptCard } from "@/components/PromptCard";
+import { PromptCard, type PromptCategory } from "@/components/PromptCard";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 
 export default function Home() {
   const { user, logout, isAuthenticated } = useAuth();
-  const [category, setCategory] = useState<"Life" | "Career">("Life");
+  const [category, setCategory] = useState<PromptCategory>("Life");
   const search = useSearch();
   const [useUrlPrompt, setUseUrlPrompt] = useState(true);
   const urlPromptId = useMemo(() => {

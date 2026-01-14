@@ -28,6 +28,15 @@ export const updateReminderSettingsSchema = z.object({
   email: z.string().nullable().optional(),
 });
 
+export const wordGoalSettingsSchema = z.object({
+  dailyWordGoal: z.number().nullable(),
+  todayWordCount: z.number(),
+});
+
+export const updateWordGoalSchema = z.object({
+  dailyWordGoal: z.number().nullable(),
+});
+
 export const adminStatsSchema = z.object({
   totalUsers: z.number(),
   usersWithEmail: z.number(),
@@ -53,7 +62,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/prompts/random',
       input: z.object({
-        category: z.enum(['Life', 'Career']).optional(),
+        category: z.enum(['Life', 'Career', 'Creativity', 'Gratitude', 'Mindfulness']).optional(),
       }).optional(),
       responses: {
         200: z.custom<typeof prompts.$inferSelect>(),
@@ -111,6 +120,25 @@ export const api = {
       path: '/api/reminders/test',
       responses: {
         200: z.object({ success: z.boolean(), message: z.string() }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+  },
+  wordGoal: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/word-goal',
+      responses: {
+        200: wordGoalSettingsSchema,
+        401: z.object({ message: z.string() }),
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/word-goal',
+      input: updateWordGoalSchema,
+      responses: {
+        200: wordGoalSettingsSchema,
         401: z.object({ message: z.string() }),
       },
     },
@@ -177,5 +205,7 @@ export type StreakResponse = z.infer<typeof api.entries.streak.responses[200]>;
 export type InsertEntry = z.infer<typeof insertEntrySchema>;
 export type ReminderSettings = z.infer<typeof reminderSettingsSchema>;
 export type UpdateReminderSettings = z.infer<typeof updateReminderSettingsSchema>;
+export type WordGoalSettings = z.infer<typeof wordGoalSettingsSchema>;
+export type UpdateWordGoal = z.infer<typeof updateWordGoalSchema>;
 export type AdminStats = z.infer<typeof adminStatsSchema>;
 export type AdminUser = z.infer<typeof adminUserSchema>;
