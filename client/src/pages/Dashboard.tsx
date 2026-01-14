@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useEntries, useStreak, useDeleteEntry } from "@/hooks/use-entries";
+import { useEntries, useStreak, useDeleteEntry, useDeleteAccount } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useReminderSettings, useUpdateReminderSettings, useSendTestReminder } from "@/hooks/use-reminders";
 import { useEmailVerificationStatus } from "@/hooks/use-email-verification";
@@ -7,14 +7,14 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { WritingCalendar } from "@/components/WritingCalendar";
 import { VerificationBanner } from "@/components/VerificationBanner";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send } from "lucide-react";
+import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
 import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 import { useToast } from "@/hooks/use-toast";
@@ -61,9 +61,11 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => ({
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const { data: entries, isLoading: entriesLoading } = useEntries();
   const { data: streak, isLoading: streakLoading } = useStreak();
   const { mutate: deleteEntry, isPending: isDeleting } = useDeleteEntry();
+  const { mutate: deleteAccount, isPending: isDeletingAccount } = useDeleteAccount();
   const { data: reminderSettings, isLoading: reminderLoading } = useReminderSettings();
   const { mutate: updateReminders, isPending: isUpdatingReminders } = useUpdateReminderSettings();
   const { mutate: sendTestReminder, isPending: isSendingTest } = useSendTestReminder();
@@ -190,6 +192,18 @@ export default function Dashboard() {
       onSuccess: () => {
         toast({ title: "Deleted", description: "Entry has been removed." });
         if (expandedId === id) setExpandedId(null);
+      },
+      onError: (err) => {
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    deleteAccount(undefined, {
+      onSuccess: () => {
+        toast({ title: "Account Deleted", description: "Your account has been permanently removed." });
+        setLocation("/");
       },
       onError: (err) => {
         toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -603,6 +617,52 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Danger Zone */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-16 pt-8 border-t border-border/30"
+        >
+          <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              <h3 className="font-semibold text-destructive">Danger Zone</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive"
+                  disabled={isDeletingAccount}
+                  data-testid="button-delete-account"
+                >
+                  {isDeletingAccount ? "Deleting..." : "Delete My Account"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you certain?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    All your journal entries will be removed. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDeleteAccount}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Yes, Delete Everything
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </motion.div>
 
         {/* Footer */}
         <footer className="mt-16 pt-8 pb-4 text-center border-t border-border/30">

@@ -1,15 +1,30 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { format } from "date-fns";
-import { Users, Mail, Bell, FileText, Download, ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { Users, Mail, Bell, FileText, Download, ArrowLeft, Loader2, ShieldCheck, Trash2, Search } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { AdminStats, AdminUser } from "@shared/routes";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Admin() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
   
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
@@ -17,6 +32,28 @@ export default function Admin() {
   
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
+  });
+
+  const { mutate: deleteUser, isPending: isDeletingUser } = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to delete user");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: "User Deleted", description: "User and their entries have been removed." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
   });
 
   const handleExportCSV = () => {
@@ -57,6 +94,21 @@ export default function Admin() {
 
   const isLoading = statsLoading || usersLoading;
   const hasError = statsError || usersError;
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    if (!searchQuery.trim()) return users;
+    
+    const query = searchQuery.toLowerCase();
+    return users.filter(user => {
+      const fullName = `${user.firstName || ""} ${user.lastName || ""}`.toLowerCase();
+      return (
+        user.username.toLowerCase().includes(query) ||
+        (user.email && user.email.toLowerCase().includes(query)) ||
+        fullName.includes(query)
+      );
+    });
+  }, [users, searchQuery]);
 
   if (hasError) {
     return (
@@ -157,16 +209,28 @@ export default function Admin() {
             </section>
 
             <section>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <h2 className="text-lg font-medium">Users</h2>
-                <Button 
-                  onClick={handleExportCSV} 
-                  disabled={!users || users.length === 0}
-                  data-testid="button-export-csv"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Emails (CSV)
-                </Button>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search users..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 w-64"
+                      data-testid="input-search-users"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleExportCSV} 
+                    disabled={!users || users.length === 0}
+                    data-testid="button-export-csv"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Emails (CSV)
+                  </Button>
+                </div>
               </div>
               
               <Card>
@@ -178,13 +242,16 @@ export default function Admin() {
                           <th className="text-left p-4 font-medium">Username</th>
                           <th className="text-left p-4 font-medium">Email</th>
                           <th className="text-left p-4 font-medium">Name</th>
+                          <th className="text-left p-4 font-medium">Entries</th>
+                          <th className="text-left p-4 font-medium">Last Entry</th>
                           <th className="text-left p-4 font-medium">Signed Up</th>
                           <th className="text-left p-4 font-medium">Reminders</th>
+                          <th className="text-right p-4 font-medium">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {users && users.length > 0 ? (
-                          users.map((user) => (
+                        {filteredUsers.length > 0 ? (
+                          filteredUsers.map((user) => (
                             <tr 
                               key={user.id} 
                               className="border-b last:border-0 hover-elevate"
@@ -200,6 +267,15 @@ export default function Admin() {
                                   : <span className="text-muted-foreground italic">—</span>
                                 }
                               </td>
+                              <td className="p-4 text-center font-medium">
+                                {user.entryCount}
+                              </td>
+                              <td className="p-4 text-muted-foreground">
+                                {user.lastEntryDate 
+                                  ? format(new Date(user.lastEntryDate), "MMM d, yyyy")
+                                  : <span className="italic">Never</span>
+                                }
+                              </td>
                               <td className="p-4 text-muted-foreground">
                                 {user.createdAt 
                                   ? format(new Date(user.createdAt), "MMM d, yyyy")
@@ -212,12 +288,44 @@ export default function Admin() {
                                   : <span className="text-muted-foreground">Off</span>
                                 }
                               </td>
+                              <td className="p-4 text-right">
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      disabled={isDeletingUser}
+                                      data-testid={`button-delete-user-${user.id}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete this user?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete {user.username}'s account and all their journal entries. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => deleteUser(user.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete User
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                              No users yet
+                            <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                              {searchQuery ? `No users found matching "${searchQuery}"` : "No users yet"}
                             </td>
                           </tr>
                         )}

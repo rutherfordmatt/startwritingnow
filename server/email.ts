@@ -29,6 +29,11 @@ interface WelcomeEmailData {
   appUrl: string;
 }
 
+interface GoodbyeEmailData {
+  to: string;
+  username: string;
+}
+
 export async function sendVerificationEmail({ to, username, verificationUrl }: VerificationEmailData): Promise<boolean> {
   try {
     await resend.emails.send({
@@ -127,6 +132,51 @@ export async function sendWelcomeEmail({ to, username, appUrl }: WelcomeEmailDat
     return true;
   } catch (error) {
     console.error('Failed to send welcome email:', error);
+    return false;
+  }
+}
+
+export async function sendGoodbyeEmail({ to, username }: GoodbyeEmailData): Promise<boolean> {
+  try {
+    await resend.emails.send({
+      from: 'startwriting.now <noreply@startwriting.now>',
+      to: [to],
+      subject: 'Sorry to see you go - startwriting.now',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Goodbye, ${username}</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">We're sorry to see you go</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 12px 12px;">
+            <p style="margin: 0 0 20px 0; color: #666;">Your account and all journal entries have been permanently deleted as requested.</p>
+            
+            <p style="margin: 0 0 20px 0; color: #666;">We hope your time with startwriting.now was valuable. If you ever want to return, we'll be here.</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+              <p style="margin: 0; color: #666; font-style: italic;">"Every ending is a new beginning."</p>
+            </div>
+            
+            <p style="margin: 0; color: #666;">Take care and keep writing, wherever life takes you.</p>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+            <p style="margin: 0;">Thank you for being part of our community.</p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error('Failed to send goodbye email:', error);
     return false;
   }
 }

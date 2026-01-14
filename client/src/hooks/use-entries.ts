@@ -101,3 +101,25 @@ export function useDeleteEntry() {
     },
   });
 }
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/user/account", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to delete account");
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.clear();
+    },
+  });
+}

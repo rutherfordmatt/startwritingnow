@@ -20,6 +20,8 @@ export interface AdminUser {
   lastName: string | null;
   createdAt: Date | null;
   reminderEnabled: boolean | null;
+  entryCount: number;
+  lastEntryDate: Date | null;
 }
 
 export interface AdminStats {
@@ -54,6 +56,10 @@ export interface IStorage {
   // Admin
   getAdminStats(): Promise<AdminStats>;
   getAllUsers(): Promise<AdminUser[]>;
+  
+  // User Management
+  deleteUser(userId: string): Promise<boolean>;
+  deleteUserEntries(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -303,7 +309,40 @@ export class DatabaseStorage implements IStorage {
     .from(users)
     .orderBy(desc(users.createdAt));
     
-    return allUsers;
+    const allEntries = await db.select({
+      userId: entries.userId,
+      createdAt: entries.createdAt,
+    }).from(entries);
+    
+    const entryCountMap = new Map<string, number>();
+    const lastEntryMap = new Map<string, Date>();
+    
+    for (const entry of allEntries) {
+      const count = entryCountMap.get(entry.userId) || 0;
+      entryCountMap.set(entry.userId, count + 1);
+      
+      const lastEntry = lastEntryMap.get(entry.userId);
+      if (!lastEntry || entry.createdAt > lastEntry) {
+        lastEntryMap.set(entry.userId, entry.createdAt);
+      }
+    }
+    
+    return allUsers.map(user => ({
+      ...user,
+      entryCount: entryCountMap.get(user.id) || 0,
+      lastEntryDate: lastEntryMap.get(user.id) || null,
+    }));
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    await this.deleteUserEntries(userId);
+    const result = await db.delete(users).where(eq(users.id, userId)).returning();
+    return result.length > 0;
+  }
+
+  async deleteUserEntries(userId: string): Promise<number> {
+    const result = await db.delete(entries).where(eq(entries.userId, userId)).returning();
+    return result.length;
   }
 }
 

@@ -43,6 +43,8 @@ export const adminUserSchema = z.object({
   lastName: z.string().nullable(),
   createdAt: z.string().nullable(),
   reminderEnabled: z.boolean().nullable(),
+  entryCount: z.number(),
+  lastEntryDate: z.string().nullable(),
 });
 
 export const api = {

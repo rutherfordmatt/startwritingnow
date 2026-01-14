@@ -7,7 +7,7 @@ import { api, updateReminderSettingsSchema } from "@shared/routes";
 import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
-import { sendVerificationEmail, sendWelcomeEmail } from "./email";
+import { sendVerificationEmail, sendWelcomeEmail, sendGoodbyeEmail } from "./email";
 
 function getAppUrl(): string {
   // In production, REPLIT_DOMAINS contains the deployed domain(s)
@@ -225,6 +225,43 @@ export async function registerRoutes(
     }
   });
 
+  // User Account Management
+  
+  // Delete own account
+  app.delete("/api/user/account", isAuthenticated, async (req, res) => {
+    const userId = req.user!.id;
+    const userEmail = req.user!.email;
+    const username = getDisplayName(req.user!);
+    
+    try {
+      const deleted = await storage.deleteUser(userId);
+      if (deleted) {
+        if (userEmail) {
+          sendGoodbyeEmail({ to: userEmail, username }).catch(err => {
+            console.error("Failed to send goodbye email:", err);
+          });
+        }
+        req.logout((logoutErr) => {
+          if (logoutErr) {
+            console.error("Logout error:", logoutErr);
+          }
+          req.session.destroy((sessionErr) => {
+            if (sessionErr) {
+              console.error("Session destroy error:", sessionErr);
+            }
+            res.clearCookie("connect.sid");
+            res.json({ success: true, message: "Account deleted successfully" });
+          });
+        });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting user account:", error);
+      res.status(500).json({ message: "Failed to delete account" });
+    }
+  });
+
   // Admin Routes
   
   // Get Admin Stats (Admin only)
@@ -239,8 +276,30 @@ export async function registerRoutes(
     const usersWithFormattedDates = users.map(u => ({
       ...u,
       createdAt: u.createdAt ? u.createdAt.toISOString() : null,
+      lastEntryDate: u.lastEntryDate ? u.lastEntryDate.toISOString() : null,
     }));
     res.json(usersWithFormattedDates);
+  });
+
+  // Delete User (Admin only)
+  app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    
+    if (userId === req.user!.id) {
+      return res.status(400).json({ message: "Cannot delete your own admin account" });
+    }
+    
+    try {
+      const deleted = await storage.deleteUser(userId);
+      if (deleted) {
+        res.json({ success: true, message: "User deleted successfully" });
+      } else {
+        res.status(404).json({ message: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
   });
 
   // Email Verification Routes
