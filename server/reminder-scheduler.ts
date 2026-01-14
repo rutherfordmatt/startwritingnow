@@ -33,12 +33,13 @@ function getDisplayName(user: { firstName?: string | null; username: string; ema
   return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 }
 
-async function getRandomPrompt(): Promise<string> {
+async function getRandomPrompt(): Promise<{ id: number; content: string }> {
   const allPrompts = await db.select().from(prompts);
   if (allPrompts.length === 0) {
-    return "What's on your mind today?";
+    return { id: 0, content: "What's on your mind today?" };
   }
-  return allPrompts[Math.floor(Math.random() * allPrompts.length)].content;
+  const prompt = allPrompts[Math.floor(Math.random() * allPrompts.length)];
+  return { id: prompt.id, content: prompt.content };
 }
 
 async function sendReminders(): Promise<void> {
@@ -70,7 +71,8 @@ async function sendReminders(): Promise<void> {
         const success = await sendReminderEmail({
           to: user.email,
           username: getDisplayName(user),
-          prompt,
+          promptContent: prompt.content,
+          promptId: prompt.id,
           appUrl: APP_URL,
         });
         
@@ -109,7 +111,8 @@ export async function sendTestReminder(userId: string): Promise<{ success: boole
   const sent = await sendReminderEmail({
     to: user.email,
     username: getDisplayName(user),
-    prompt,
+    promptContent: prompt.content,
+    promptId: prompt.id,
     appUrl: APP_URL,
   });
   

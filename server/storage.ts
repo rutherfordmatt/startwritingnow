@@ -34,6 +34,7 @@ export interface AdminStats {
 export interface IStorage {
   // Prompts
   getRandomPrompt(category?: string): Promise<Prompt | undefined>;
+  getPromptById(id: number): Promise<Prompt | undefined>;
   createPrompt(content: string, category: string): Promise<Prompt>;
   
   // Entries
@@ -75,6 +76,11 @@ export class DatabaseStorage implements IStorage {
     if (allPrompts.length === 0) return undefined;
     const randomIndex = Math.floor(Math.random() * allPrompts.length);
     return allPrompts[randomIndex];
+  }
+
+  async getPromptById(id: number): Promise<Prompt | undefined> {
+    const [prompt] = await db.select().from(prompts).where(eq(prompts.id, id));
+    return prompt;
   }
 
   async createPrompt(content: string, category: string): Promise<Prompt> {

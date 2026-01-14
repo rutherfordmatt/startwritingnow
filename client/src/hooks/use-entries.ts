@@ -56,7 +56,7 @@ export function useCreateEntry() {
   });
 }
 
-export function useRandomPrompt(category?: 'Life' | 'Career') {
+export function useRandomPrompt(category?: 'Life' | 'Career' | null) {
   return useQuery({
     queryKey: [api.prompts.random.path, category],
     queryFn: async () => {
@@ -68,6 +68,22 @@ export function useRandomPrompt(category?: 'Life' | 'Career') {
       if (!res.ok) throw new Error("Failed to fetch prompt");
       return api.prompts.random.responses[200].parse(await res.json());
     },
+    enabled: category !== null,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  });
+}
+
+export function usePromptById(id: number | null) {
+  return useQuery({
+    queryKey: ['/api/prompts', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await fetch(`/api/prompts/${id}`, { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!id,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });

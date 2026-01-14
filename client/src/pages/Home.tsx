@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from "react";
-import { useRandomPrompt, useCreateEntry } from "@/hooks/use-entries";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useRandomPrompt, useCreateEntry, usePromptById } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { PromptCard } from "@/components/PromptCard";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { LogOut, BarChart3, ChevronRight, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
@@ -15,7 +15,28 @@ import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 export default function Home() {
   const { user, logout, isAuthenticated } = useAuth();
   const [category, setCategory] = useState<"Life" | "Career">("Life");
-  const { data: prompt, isLoading: promptLoading, refetch: refetchPrompt } = useRandomPrompt(category);
+  const search = useSearch();
+  const [useUrlPrompt, setUseUrlPrompt] = useState(true);
+  const urlPromptId = useMemo(() => {
+    if (!useUrlPrompt) return null;
+    const params = new URLSearchParams(search);
+    const id = params.get('prompt');
+    return id ? parseInt(id) : null;
+  }, [search, useUrlPrompt]);
+  const { data: urlPrompt, isLoading: urlPromptLoading, isFetched: urlPromptFetched } = usePromptById(urlPromptId);
+  const { data: randomPrompt, isLoading: randomPromptLoading, refetch: refetchPrompt } = useRandomPrompt(
+    urlPromptId ? null : category
+  );
+  
+  // Fallback to random prompt if URL prompt not found
+  useEffect(() => {
+    if (urlPromptId && urlPromptFetched && !urlPrompt) {
+      setUseUrlPrompt(false);
+    }
+  }, [urlPromptId, urlPromptFetched, urlPrompt]);
+  
+  const prompt = urlPromptId ? urlPrompt : randomPrompt;
+  const promptLoading = urlPromptId ? urlPromptLoading : randomPromptLoading;
   const { mutate: createEntry, isPending: isSaving } = useCreateEntry();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -133,10 +154,14 @@ export default function Home() {
             onRefresh={() => {
               setHasStarted(false);
               setContent("");
+              setUseUrlPrompt(false);
               refetchPrompt();
             }}
             category={category}
-            onCategoryChange={setCategory}
+            onCategoryChange={(newCategory) => {
+              setUseUrlPrompt(false);
+              setCategory(newCategory);
+            }}
           />
         </motion.div>
 

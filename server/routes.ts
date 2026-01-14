@@ -128,6 +128,19 @@ export async function registerRoutes(
     res.json(prompt);
   });
 
+  // Get Prompt by ID
+  app.get("/api/prompts/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid prompt ID" });
+    }
+    const prompt = await storage.getPromptById(id);
+    if (!prompt) {
+      return res.status(404).json({ message: "Prompt not found" });
+    }
+    res.json(prompt);
+  });
+
   // Create Entry (Protected)
   app.post(api.entries.create.path, isAuthenticated, async (req, res) => {
     try {
@@ -231,7 +244,8 @@ export async function registerRoutes(
   app.delete("/api/user/account", isAuthenticated, async (req, res) => {
     const userId = req.user!.id;
     const userEmail = req.user!.email;
-    const username = getDisplayName(req.user!);
+    const user = req.user as unknown as { firstName?: string | null; username: string; email?: string | null };
+    const username = getDisplayName(user);
     
     try {
       const deleted = await storage.deleteUser(userId);

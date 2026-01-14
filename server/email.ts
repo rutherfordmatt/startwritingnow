@@ -5,7 +5,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 interface ReminderEmailData {
   to: string;
   username: string;
-  prompt: string;
+  promptContent: string;
+  promptId: number;
   appUrl: string;
 }
 
@@ -181,8 +182,9 @@ export async function sendGoodbyeEmail({ to, username }: GoodbyeEmailData): Prom
   }
 }
 
-export async function sendReminderEmail({ to, username, prompt, appUrl }: ReminderEmailData): Promise<boolean> {
+export async function sendReminderEmail({ to, username, promptContent, promptId, appUrl }: ReminderEmailData): Promise<boolean> {
   const greeting = FRIENDLY_GREETINGS[Math.floor(Math.random() * FRIENDLY_GREETINGS.length)];
+  const writeUrl = promptId > 0 ? `${appUrl}?prompt=${promptId}` : appUrl;
   
   try {
     await resend.emails.send({
@@ -206,11 +208,11 @@ export async function sendReminderEmail({ to, username, prompt, appUrl }: Remind
             <p style="margin: 0 0 20px 0; color: #666;">Here's your prompt for today:</p>
             
             <div style="background: white; padding: 25px; border-radius: 8px; border-left: 4px solid #667eea; margin-bottom: 25px;">
-              <p style="margin: 0; font-size: 18px; color: #333; font-style: italic;">"${prompt}"</p>
+              <p style="margin: 0; font-size: 18px; color: #333; font-style: italic;">"${promptContent}"</p>
             </div>
             
             <div style="text-align: center;">
-              <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Start Writing</a>
+              <a href="${writeUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Start Writing</a>
             </div>
             
             <p style="margin: 25px 0 0 0; color: #888; font-size: 14px; text-align: center;">
