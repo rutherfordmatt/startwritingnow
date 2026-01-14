@@ -192,12 +192,12 @@ export default function Home() {
                     <Target className="w-3 h-3 text-muted-foreground" />
                     <div className="w-24">
                       <Progress 
-                        value={Math.min(100, ((todayProgress || 0) / wordGoalSettings.dailyWordGoal) * 100)} 
+                        value={Math.min(100, (((todayProgress || 0) + wordCount) / wordGoalSettings.dailyWordGoal) * 100)} 
                         className="h-2"
                       />
                     </div>
                     <span className="text-xs font-mono text-muted-foreground">
-                      {todayProgress || 0}/{wordGoalSettings.dailyWordGoal}
+                      {(todayProgress || 0) + wordCount}/{wordGoalSettings.dailyWordGoal}
                     </span>
                   </div>
                 ) : (
