@@ -36,6 +36,15 @@ export default function Home() {
     const entryDate = new Date(entry.createdAt).toDateString();
     return entryDate === new Date().toDateString();
   }) ?? false;
+  
+  const monthlyWordCount = useMemo(() => {
+    if (!entries) return 0;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    return entries
+      .filter(entry => new Date(entry.createdAt) >= startOfMonth)
+      .reduce((sum, entry) => sum + entry.wordCount, 0);
+  }, [entries]);
   const urlPromptId = useMemo(() => {
     if (!useUrlPrompt) return null;
     const params = new URLSearchParams(search);
@@ -194,6 +203,7 @@ export default function Home() {
             userName={user?.firstName || undefined}
             currentStreak={streak.currentStreak}
             totalEntries={entries.length}
+            monthlyWordCount={monthlyWordCount}
             lastEntryDate={streak.lastEntryDate ? new Date(streak.lastEntryDate) : null}
             hasWrittenToday={hasWrittenToday}
           />
