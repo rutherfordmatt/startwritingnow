@@ -20,6 +20,7 @@ interface ReminderSetupModalProps {
   isOpen: boolean;
   onClose: () => void;
   userEmail?: string;
+  userId?: string;
 }
 
 const TIMEZONES = [
@@ -44,7 +45,7 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => ({
   label: `${hour === 0 ? "12" : hour > 12 ? hour - 12 : hour}:00 ${hour < 12 ? "AM" : "PM"}`,
 }));
 
-export function ReminderSetupModal({ isOpen, onClose, userEmail }: ReminderSetupModalProps) {
+export function ReminderSetupModal({ isOpen, onClose, userEmail, userId }: ReminderSetupModalProps) {
   const [email, setEmail] = useState(userEmail || "");
   const [time, setTime] = useState("09:00");
   const [timezone, setTimezone] = useState("America/New_York");
@@ -77,7 +78,9 @@ export function ReminderSetupModal({ isOpen, onClose, userEmail }: ReminderSetup
   };
 
   const handleSkip = () => {
-    localStorage.setItem("snw_reminder_setup_skipped", "true");
+    if (userId) {
+      localStorage.setItem(`snw_reminder_setup_skipped_${userId}`, "true");
+    }
     onClose();
   };
 

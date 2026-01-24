@@ -17,22 +17,26 @@ interface WelcomeModalProps {
   userName?: string;
 }
 
-const STORAGE_KEY = "snw_welcome_shown";
+const STORAGE_KEY_PREFIX = "snw_welcome_shown_";
 
-export function useWelcomeModal(isAuthenticated: boolean, isNewUser?: boolean) {
+export function useWelcomeModal(isAuthenticated: boolean, userId?: string) {
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const hasSeenWelcome = localStorage.getItem(STORAGE_KEY);
+    if (isAuthenticated && userId) {
+      const storageKey = `${STORAGE_KEY_PREFIX}${userId}`;
+      const hasSeenWelcome = localStorage.getItem(storageKey);
       if (!hasSeenWelcome) {
         setShowWelcome(true);
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, userId]);
 
-  const dismissWelcome = () => {
-    localStorage.setItem(STORAGE_KEY, "true");
+  const dismissWelcome = (userId?: string) => {
+    if (userId) {
+      const storageKey = `${STORAGE_KEY_PREFIX}${userId}`;
+      localStorage.setItem(storageKey, "true");
+    }
     setShowWelcome(false);
   };
 

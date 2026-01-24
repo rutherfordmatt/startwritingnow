@@ -7,18 +7,24 @@ interface StreakAlertProps {
   currentStreak: number;
   longestStreak: number;
   hasWrittenToday: boolean;
+  userId?: string;
   onDismiss: () => void;
 }
 
-const DISMISSED_KEY = "snw_streak_alert_dismissed";
-const MILESTONE_KEY = "snw_last_milestone";
+const DISMISSED_KEY_PREFIX = "snw_streak_alert_dismissed_";
+const MILESTONE_KEY_PREFIX = "snw_last_milestone_";
 
-export function useStreakAlert(currentStreak: number, hasWrittenToday: boolean) {
+export function useStreakAlert(currentStreak: number, hasWrittenToday: boolean, userId?: string) {
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState<"at-risk" | "milestone" | null>(null);
 
   useEffect(() => {
-    const dismissedToday = localStorage.getItem(DISMISSED_KEY);
+    if (!userId) return;
+    
+    const dismissedKey = `${DISMISSED_KEY_PREFIX}${userId}`;
+    const milestoneKey = `${MILESTONE_KEY_PREFIX}${userId}`;
+    
+    const dismissedToday = localStorage.getItem(dismissedKey);
     const today = new Date().toDateString();
     
     if (dismissedToday === today) {
@@ -26,13 +32,13 @@ export function useStreakAlert(currentStreak: number, hasWrittenToday: boolean) 
     }
 
     const milestones = [7, 14, 21, 30, 50, 100, 365];
-    const lastMilestone = parseInt(localStorage.getItem(MILESTONE_KEY) || "0");
+    const lastMilestone = parseInt(localStorage.getItem(milestoneKey) || "0");
     
     const newMilestone = milestones.find(m => currentStreak >= m && m > lastMilestone);
     if (newMilestone && hasWrittenToday) {
       setAlertType("milestone");
       setShowAlert(true);
-      localStorage.setItem(MILESTONE_KEY, String(newMilestone));
+      localStorage.setItem(milestoneKey, String(newMilestone));
       return;
     }
 
@@ -40,21 +46,24 @@ export function useStreakAlert(currentStreak: number, hasWrittenToday: boolean) 
       setAlertType("at-risk");
       setShowAlert(true);
     }
-  }, [currentStreak, hasWrittenToday]);
+  }, [currentStreak, hasWrittenToday, userId]);
 
-  const dismissAlert = () => {
-    localStorage.setItem(DISMISSED_KEY, new Date().toDateString());
+  const dismissAlert = (userId?: string) => {
+    if (userId) {
+      const dismissedKey = `${DISMISSED_KEY_PREFIX}${userId}`;
+      localStorage.setItem(dismissedKey, new Date().toDateString());
+    }
     setShowAlert(false);
   };
 
   return { showAlert, alertType, dismissAlert };
 }
 
-export function StreakAlert({ currentStreak, longestStreak, hasWrittenToday, onDismiss }: StreakAlertProps) {
-  const { showAlert, alertType, dismissAlert } = useStreakAlert(currentStreak, hasWrittenToday);
+export function StreakAlert({ currentStreak, longestStreak, hasWrittenToday, userId, onDismiss }: StreakAlertProps) {
+  const { showAlert, alertType, dismissAlert } = useStreakAlert(currentStreak, hasWrittenToday, userId);
 
   const handleDismiss = () => {
-    dismissAlert();
+    dismissAlert(userId);
     onDismiss();
   };
 

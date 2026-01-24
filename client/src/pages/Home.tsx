@@ -28,7 +28,7 @@ export default function Home() {
   const search = useSearch();
   const [useUrlPrompt, setUseUrlPrompt] = useState(true);
   
-  const { showWelcome, dismissWelcome } = useWelcomeModal(isAuthenticated);
+  const { showWelcome, dismissWelcome } = useWelcomeModal(isAuthenticated, user?.id);
   const [showReminderSetup, setShowReminderSetup] = useState(false);
   const [streakAlertDismissed, setStreakAlertDismissed] = useState(false);
   
@@ -129,8 +129,8 @@ export default function Home() {
   }, [isAuthenticated]);
   
   const handleWelcomeClose = () => {
-    dismissWelcome();
-    const reminderSkipped = localStorage.getItem("snw_reminder_setup_skipped");
+    dismissWelcome(user?.id);
+    const reminderSkipped = user?.id ? localStorage.getItem(`snw_reminder_setup_skipped_${user.id}`) : null;
     if (!reminderSkipped) {
       setShowReminderSetup(true);
     }
@@ -149,6 +149,7 @@ export default function Home() {
         isOpen={showReminderSetup} 
         onClose={() => setShowReminderSetup(false)}
         userEmail={user?.email || undefined}
+        userId={user?.id}
       />
       
       {/* Header */}
@@ -192,6 +193,7 @@ export default function Home() {
             currentStreak={streak.currentStreak}
             longestStreak={streak.longestStreak}
             hasWrittenToday={hasWrittenToday}
+            userId={user?.id}
             onDismiss={() => setStreakAlertDismissed(true)}
           />
         )}
