@@ -170,6 +170,7 @@ export const api = {
           currentStreak: z.number(),
           longestStreak: z.number(),
           lastEntryDate: z.string().nullable(),
+          hasWrittenToday: z.boolean(),
         }),
         401: z.object({ message: z.string() }),
       },

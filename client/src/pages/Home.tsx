@@ -32,10 +32,8 @@ export default function Home() {
   const [showReminderSetup, setShowReminderSetup] = useState(false);
   const [streakAlertDismissed, setStreakAlertDismissed] = useState(false);
   
-  const hasWrittenToday = entries?.some(entry => {
-    const entryDate = new Date(entry.createdAt).toDateString();
-    return entryDate === new Date().toDateString();
-  }) ?? false;
+  // Use server-calculated value to avoid timezone mismatches
+  const hasWrittenToday = streak?.hasWrittenToday ?? false;
   
   const monthlyWordCount = useMemo(() => {
     if (!entries) return 0;

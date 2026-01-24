@@ -46,7 +46,7 @@ export interface IStorage {
   createEntry(entry: InsertEntry & { userId: string }): Promise<Entry>;
   getUserEntries(userId: string): Promise<(Entry & { prompt: Prompt | null })[]>;
   deleteEntry(id: number, userId: string): Promise<boolean>;
-  getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null }>;
+  getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null, hasWrittenToday: boolean }>;
   
   // Reminders
   getReminderSettings(userId: string): Promise<ReminderSettings | undefined>;
@@ -131,7 +131,7 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null }> {
+  async getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null, hasWrittenToday: boolean }> {
     const userEntries = await db.select({
       createdAt: entries.createdAt
     })
@@ -140,7 +140,7 @@ export class DatabaseStorage implements IStorage {
     .orderBy(desc(entries.createdAt));
 
     if (userEntries.length === 0) {
-      return { currentStreak: 0, longestStreak: 0, lastEntryDate: null };
+      return { currentStreak: 0, longestStreak: 0, lastEntryDate: null, hasWrittenToday: false };
     }
 
     // Get unique dates (one entry per day counts)
@@ -160,6 +160,9 @@ export class DatabaseStorage implements IStorage {
     let currentStreak = 0;
     const todayTime = today.getTime();
     const dayMs = 24 * 60 * 60 * 1000;
+    
+    // Check if user wrote today
+    const hasWrittenToday = uniqueDates[0] === todayTime;
     
     // Check if most recent entry was today or yesterday
     const mostRecentDiff = Math.floor((todayTime - uniqueDates[0]) / dayMs);
@@ -196,7 +199,8 @@ export class DatabaseStorage implements IStorage {
     return {
       currentStreak,
       longestStreak,
-      lastEntryDate: userEntries[0].createdAt.toISOString()
+      lastEntryDate: userEntries[0].createdAt.toISOString(),
+      hasWrittenToday
     };
   }
 
