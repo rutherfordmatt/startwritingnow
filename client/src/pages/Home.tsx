@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useRandomPrompt, useCreateEntry, usePromptById } from "@/hooks/use-entries";
+import { useRandomPrompt, useCreateEntry, usePromptById, useStreak, useEntries } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useWordGoalSettings, useTodayWordCount } from "@/hooks/use-word-goal";
 import { PromptCard, type PromptCategory } from "@/components/PromptCard";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { WelcomeModal, useWelcomeModal } from "@/components/WelcomeModal";
+import { StreakAlert } from "@/components/StreakAlert";
+import { ReminderSetupModal } from "@/components/ReminderSetupModal";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -18,9 +21,20 @@ export default function Home() {
   const { user, logout, isAuthenticated } = useAuth();
   const { data: wordGoalSettings } = useWordGoalSettings();
   const { data: todayProgress } = useTodayWordCount();
+  const { data: streak } = useStreak();
+  const { data: entries } = useEntries();
   const [category, setCategory] = useState<PromptCategory>("Life");
   const search = useSearch();
   const [useUrlPrompt, setUseUrlPrompt] = useState(true);
+  
+  const { showWelcome, dismissWelcome } = useWelcomeModal(isAuthenticated);
+  const [showReminderSetup, setShowReminderSetup] = useState(false);
+  const [streakAlertDismissed, setStreakAlertDismissed] = useState(false);
+  
+  const hasWrittenToday = entries?.some(entry => {
+    const entryDate = new Date(entry.createdAt).toDateString();
+    return entryDate === new Date().toDateString();
+  }) ?? false;
   const urlPromptId = useMemo(() => {
     if (!useUrlPrompt) return null;
     const params = new URLSearchParams(search);
@@ -105,11 +119,30 @@ export default function Home() {
       sessionStorage.removeItem("draft_content");
     }
   }, [isAuthenticated]);
+  
+  const handleWelcomeClose = () => {
+    dismissWelcome();
+    const reminderSkipped = localStorage.getItem("snw_reminder_setup_skipped");
+    if (!reminderSkipped) {
+      setShowReminderSetup(true);
+    }
+  };
 
   const wordCount = content.trim() === "" ? 0 : content.trim().split(/\s+/).length;
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
+      <WelcomeModal 
+        isOpen={showWelcome} 
+        onClose={handleWelcomeClose} 
+        userName={user?.firstName || undefined}
+      />
+      <ReminderSetupModal 
+        isOpen={showReminderSetup} 
+        onClose={() => setShowReminderSetup(false)}
+        userEmail={user?.email || undefined}
+      />
+      
       {/* Header */}
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -146,6 +179,15 @@ export default function Home() {
       </header>
 
       <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        {isAuthenticated && !streakAlertDismissed && streak && (
+          <StreakAlert
+            currentStreak={streak.currentStreak}
+            longestStreak={streak.longestStreak}
+            hasWrittenToday={hasWrittenToday}
+            onDismiss={() => setStreakAlertDismissed(true)}
+          />
+        )}
+        
         {/* Prompt Section */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
