@@ -61,16 +61,16 @@ Preferred communication style: Simple, everyday language.
 
 ### User Retention Features
 - **Welcome Modal**: 3-step onboarding modal for first-time authenticated users explaining the 3-minute journaling concept
-- **Reminder Setup Prompt**: After closing the welcome modal, users are prompted to set up daily email reminders
+- **Reminder Setup Prompt**: Appears AFTER user saves their first journal entry (not after welcome modal), prompting them to set up daily email reminders once they've experienced value
 - **Welcome Back Pill**: Subtle inline pill above the prompt showing personalized context (streak status, last entry, total entries)
 - **Streak Alerts**: 
   - "At risk" alert when users have a streak but haven't written today
   - Milestone celebrations at 7, 14, 21, 30, 50, 100, and 365 days
-- **LocalStorage Keys**:
-  - `snw_welcome_shown`: Tracks if user has seen welcome modal
-  - `snw_reminder_setup_skipped`: Tracks if user skipped reminder setup
-  - `snw_streak_alert_dismissed`: Tracks daily streak alert dismissal
-  - `snw_last_milestone`: Tracks last celebrated milestone
+- **LocalStorage Keys** (user-specific with userId suffix):
+  - `snw_welcome_shown_[userId]`: Tracks if user has seen welcome modal
+  - `snw_reminder_setup_skipped_[userId]`: Tracks if user skipped reminder setup
+  - `snw_streak_alert_dismissed_[userId]`: Tracks daily streak alert dismissal
+  - `snw_last_milestone_[userId]`: Tracks last celebrated milestone
 
 ## External Dependencies
 
