@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { WelcomeModal, useWelcomeModal } from "@/components/WelcomeModal";
 import { StreakAlert } from "@/components/StreakAlert";
 import { ReminderSetupModal } from "@/components/ReminderSetupModal";
+import { WelcomeBackPill } from "@/components/WelcomeBackPill";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -185,6 +186,16 @@ export default function Home() {
             longestStreak={streak.longestStreak}
             hasWrittenToday={hasWrittenToday}
             onDismiss={() => setStreakAlertDismissed(true)}
+          />
+        )}
+        
+        {isAuthenticated && streak && entries && entries.length > 0 && (
+          <WelcomeBackPill
+            userName={user?.firstName || undefined}
+            currentStreak={streak.currentStreak}
+            totalEntries={entries.length}
+            lastEntryDate={streak.lastEntryDate ? new Date(streak.lastEntryDate) : null}
+            hasWrittenToday={hasWrittenToday}
           />
         )}
         

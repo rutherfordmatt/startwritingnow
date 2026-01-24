@@ -62,6 +62,7 @@ Preferred communication style: Simple, everyday language.
 ### User Retention Features
 - **Welcome Modal**: 3-step onboarding modal for first-time authenticated users explaining the 3-minute journaling concept
 - **Reminder Setup Prompt**: After closing the welcome modal, users are prompted to set up daily email reminders
+- **Welcome Back Pill**: Subtle inline pill above the prompt showing personalized context (streak status, last entry, total entries)
 - **Streak Alerts**: 
   - "At risk" alert when users have a streak but haven't written today
   - Milestone celebrations at 7, 14, 21, 30, 50, 100, and 365 days
