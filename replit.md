@@ -59,6 +59,18 @@ Preferred communication style: Simple, everyday language.
   - Emails include a random writing prompt and link to the app
   - Test reminder functionality to verify email delivery
 
+### User Retention Features
+- **Welcome Modal**: 3-step onboarding modal for first-time authenticated users explaining the 3-minute journaling concept
+- **Reminder Setup Prompt**: After closing the welcome modal, users are prompted to set up daily email reminders
+- **Streak Alerts**: 
+  - "At risk" alert when users have a streak but haven't written today
+  - Milestone celebrations at 7, 14, 21, 30, 50, 100, and 365 days
+- **LocalStorage Keys**:
+  - `snw_welcome_shown`: Tracks if user has seen welcome modal
+  - `snw_reminder_setup_skipped`: Tracks if user skipped reminder setup
+  - `snw_streak_alert_dismissed`: Tracks daily streak alert dismissal
+  - `snw_last_milestone`: Tracks last celebrated milestone
+
 ## External Dependencies
 
 ### Authentication
