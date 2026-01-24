@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useRandomPrompt, useCreateEntry, usePromptById, useStreak, useEntries } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useWordGoalSettings, useTodayWordCount } from "@/hooks/use-word-goal";
@@ -32,6 +32,8 @@ export default function Home() {
   const [showReminderSetup, setShowReminderSetup] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(false);
   const [streakAlertDismissed, setStreakAlertDismissed] = useState(false);
+  const [showSuccessState, setShowSuccessState] = useState(false);
+  const [successStreakCount, setSuccessStreakCount] = useState(0);
   
   // Use server-calculated value to avoid timezone mismatches
   const hasWrittenToday = streak?.hasWrittenToday ?? false;
@@ -70,7 +72,18 @@ export default function Home() {
 
   const [content, setContent] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
+  const [isDirty, setIsDirty] = useState(false); // Track if content has unsaved changes
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -80,8 +93,23 @@ export default function Home() {
     }
   }, [content]);
 
+  // Warn before leaving with unsaved content
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && content.trim().length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, content]);
+
   const handleStartTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
+    setIsDirty(true); // Mark as dirty when user types
     if (!hasStarted && e.target.value.length > 0) {
       setHasStarted(true);
     }
@@ -103,22 +131,29 @@ export default function Home() {
       wordCount: content.trim().split(/\s+/).length,
     }, {
       onSuccess: () => {
-        toast({
-          title: "Entry Saved",
-          description: "Great job! Your thought has been captured.",
-        });
+        // Show success celebration
+        const newStreakCount = (streak?.currentStreak || 0) + (hasWrittenToday ? 0 : 1);
+        setSuccessStreakCount(newStreakCount);
+        setShowSuccessState(true);
+        setIsDirty(false); // Mark as clean after successful save
+        setContent(""); // Clear content
         
-        // Check if user needs reminder setup prompt
-        const reminderSkipped = user?.id ? localStorage.getItem(`snw_reminder_setup_skipped_${user.id}`) : null;
-        const hasRemindersEnabled = user?.reminderEnabled;
-        
-        if (!hasRemindersEnabled && !reminderSkipped) {
-          // Show reminder setup modal, navigate to dashboard after
-          setPendingNavigation(true);
-          setShowReminderSetup(true);
-        } else {
-          setLocation("/dashboard");
-        }
+        // After celebration, check for reminders or navigate
+        saveTimeoutRef.current = setTimeout(() => {
+          setShowSuccessState(false);
+          
+          // Check if user needs reminder setup prompt
+          const reminderSkipped = user?.id ? localStorage.getItem(`snw_reminder_setup_skipped_${user.id}`) : null;
+          const hasRemindersEnabled = user?.reminderEnabled;
+          
+          if (!hasRemindersEnabled && !reminderSkipped) {
+            // Show reminder setup modal, navigate to dashboard after
+            setPendingNavigation(true);
+            setShowReminderSetup(true);
+          } else {
+            setLocation("/dashboard");
+          }
+        }, 2500);
       },
       onError: (err) => {
         toast({
@@ -136,6 +171,7 @@ export default function Home() {
     if (draft && isAuthenticated) {
       setContent(draft);
       setHasStarted(true);
+      setIsDirty(true); // Mark as dirty so unsaved warning still triggers
       sessionStorage.removeItem("draft_content");
     }
   }, [isAuthenticated]);
@@ -156,6 +192,53 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
+      {/* Success Celebration Overlay */}
+      <AnimatePresence>
+        {showSuccessState && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="text-center p-8"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                className="inline-flex p-6 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 mb-6"
+              >
+                <Check className="w-12 h-12" />
+              </motion.div>
+              <motion.h2
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-3xl font-serif font-medium mb-2"
+              >
+                Entry saved!
+              </motion.h2>
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-lg text-muted-foreground"
+              >
+                {successStreakCount > 1 
+                  ? `Day ${successStreakCount}! You're building something great.`
+                  : "Great start! Your writing journey begins."}
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <WelcomeModal 
         isOpen={showWelcome} 
         onClose={handleWelcomeClose} 
@@ -204,6 +287,19 @@ export default function Home() {
       </header>
 
       <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        {/* Value proposition for non-authenticated users */}
+        {!isAuthenticated && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-8"
+          >
+            <p className="text-lg text-muted-foreground font-medium">
+              3 minutes. One prompt. Start your writing habit today.
+            </p>
+          </motion.div>
+        )}
+
         {isAuthenticated && !streakAlertDismissed && streak && (
           <StreakAlert
             currentStreak={streak.currentStreak}
@@ -212,6 +308,19 @@ export default function Home() {
             userId={user?.id}
             onDismiss={() => setStreakAlertDismissed(true)}
           />
+        )}
+        
+        {/* Empty state for first-time users */}
+        {isAuthenticated && entries && entries.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-6 p-4 rounded-xl bg-primary/5 border border-primary/10"
+          >
+            <p className="text-muted-foreground">
+              Your first entry awaits. No pressure — just 3 minutes.
+            </p>
+          </motion.div>
         )}
         
         {isAuthenticated && streak && entries && entries.length > 0 && (
@@ -284,30 +393,30 @@ export default function Home() {
                     {wordCount} words
                   </span>
                 )}
-                <AnimatePresence mode="wait">
-                  {hasStarted && wordCount >= 5 && (
-                    <motion.div
-                      key="save"
-                      initial={{ opacity: 0, scale: 0.9, x: 20 }}
-                      animate={{ opacity: 1, scale: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                    >
-                      <Button 
-                        onClick={handleSave} 
-                        disabled={isSaving}
-                        className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all gap-2"
-                        data-testid="button-save-entry"
-                      >
-                        {isSaving ? "Saving..." : (
-                          <>
-                            <Check className="w-4 h-4" />
-                            Done
-                          </>
-                        )}
-                      </Button>
-                    </motion.div>
+                <div className="relative group">
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving || wordCount < 5}
+                    className={`shadow-lg transition-all gap-2 ${
+                      wordCount >= 5 
+                        ? "shadow-primary/20 hover:shadow-primary/40" 
+                        : "opacity-50 cursor-not-allowed"
+                    }`}
+                    data-testid="button-save-entry"
+                  >
+                    {isSaving ? "Saving..." : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Done
+                      </>
+                    )}
+                  </Button>
+                  {wordCount < 5 && (
+                    <div className="absolute -bottom-8 right-0 text-xs text-muted-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                      Write at least 5 words to save
+                    </div>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
             </div>
 

@@ -1,8 +1,14 @@
-import { RefreshCw, Sparkles } from "lucide-react";
+import { RefreshCw, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { type Prompt } from "@shared/schema";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type PromptCategory = "Life" | "Career" | "Creativity" | "Gratitude" | "Mindfulness";
 
@@ -21,11 +27,38 @@ export function PromptCard({
   category, 
   onCategoryChange 
 }: PromptCardProps) {
+  const categories: PromptCategory[] = ["Life", "Career", "Creativity", "Gratitude", "Mindfulness"];
+  
   return (
     <div className="w-full">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-full overflow-x-auto">
-          {(["Life", "Career", "Creativity", "Gratitude", "Mindfulness"] as const).map((cat) => (
+      <div className="flex flex-row items-center justify-between gap-4 mb-6">
+        {/* Mobile dropdown */}
+        <div className="md:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2" data-testid="button-category-mobile">
+                {category}
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {categories.map((cat) => (
+                <DropdownMenuItem
+                  key={cat}
+                  onClick={() => onCategoryChange(cat)}
+                  className={category === cat ? "bg-muted" : ""}
+                  data-testid={`button-category-mobile-${cat.toLowerCase()}`}
+                >
+                  {cat}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Desktop tabs */}
+        <div className="hidden md:flex items-center gap-1 bg-muted/50 p-1 rounded-full">
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => onCategoryChange(cat)}

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, Mail, Clock, ArrowRight, X } from "lucide-react";
+import { Bell, Mail, Clock, ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUpdateReminderSettings } from "@/hooks/use-reminders";
 import { useToast } from "@/hooks/use-toast";
@@ -94,13 +94,13 @@ export function ReminderSetupModal({ isOpen, onClose, userEmail, userId }: Remin
             transition={{ duration: 0.3 }}
             className="mx-auto mb-4"
           >
-            <div className="inline-flex p-4 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30">
-              <Bell className="w-8 h-8" />
+            <div className="inline-flex p-4 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30">
+              <Sparkles className="w-8 h-8" />
             </div>
           </motion.div>
-          <DialogTitle className="text-xl font-serif">Stay on track</DialogTitle>
+          <DialogTitle className="text-xl font-serif">You did it!</DialogTitle>
           <DialogDescription className="text-base pt-2">
-            Get a friendly daily reminder to keep your writing habit strong.
+            Your entry is saved. Want help keeping this going? We can send you a friendly daily nudge.
           </DialogDescription>
         </DialogHeader>
 

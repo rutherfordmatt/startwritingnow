@@ -113,10 +113,10 @@ export function StreakAlert({ currentStreak, longestStreak, hasWrittenToday, use
               <>
                 <h4 className="font-medium text-orange-900 dark:text-orange-100 flex items-center gap-2">
                   <Flame className="w-4 h-4" />
-                  Don't lose your {currentStreak}-day streak!
+                  You're on a {currentStreak}-day streak!
                 </h4>
                 <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
-                  You haven't written today yet. Take 3 minutes to keep your momentum going.
+                  One quick entry keeps it going. Just 3 minutes to maintain your momentum.
                 </p>
               </>
             ) : (

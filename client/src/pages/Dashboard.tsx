@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { WritingCalendar } from "@/components/WritingCalendar";
 import { VerificationBanner } from "@/components/VerificationBanner";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
+import { Download, Flame, Calendar, BookOpen, ChevronDown, ChevronRight, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
 import { SiX, SiFacebook, SiThreads, SiBluesky } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -328,6 +328,34 @@ export default function Dashboard() {
         {/* Email Verification Banner */}
         {reminderSettings?.email && verificationStatus && !verificationStatus.isVerified && (
           <VerificationBanner email={reminderSettings.email} />
+        )}
+
+        {/* Write Today CTA - only show if hasn't written today */}
+        {streak && !streak.hasWrittenToday && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Link href="/">
+              <div className="bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border border-primary/20 rounded-2xl p-5 flex items-center justify-between hover:border-primary/40 transition-colors cursor-pointer group" data-testid="cta-write-today">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-full bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                    <PenLine className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">Ready to write?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {streak.currentStreak > 0 
+                        ? `Keep your ${streak.currentStreak}-day streak going!`
+                        : "Start your writing journey today"}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
+          </motion.div>
         )}
 
         {/* Streak Cards */}
