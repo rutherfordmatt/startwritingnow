@@ -64,13 +64,24 @@ Preferred communication style: Simple, everyday language.
 - **Reminder Setup Prompt**: Appears AFTER user saves their first journal entry (not after welcome modal), prompting them to set up daily email reminders once they've experienced value
 - **Welcome Back Pill**: Subtle inline pill above the prompt showing personalized context (streak status, last entry, total entries)
 - **Streak Alerts**: 
-  - "At risk" alert when users have a streak but haven't written today
+  - Positive reinforcement language ("You're on a X-day streak!")
   - Milestone celebrations at 7, 14, 21, 30, 50, 100, and 365 days
 - **LocalStorage Keys** (user-specific with userId suffix):
   - `snw_welcome_shown_[userId]`: Tracks if user has seen welcome modal
   - `snw_reminder_setup_skipped_[userId]`: Tracks if user skipped reminder setup
   - `snw_streak_alert_dismissed_[userId]`: Tracks daily streak alert dismissal
   - `snw_last_milestone_[userId]`: Tracks last celebrated milestone
+
+### UX Improvements (Anxiety Reduction Philosophy)
+- **Unsaved Work Warning**: beforeunload handler warns users before leaving with unsaved content (uses isDirty flag)
+- **Timer Count-Up**: After 3:00, timer continues counting up as "Bonus time" rather than stopping, reducing pressure
+- **Always-Visible Done Button**: Done button visible but disabled until 5+ words, with tooltip explaining requirement
+- **Success Celebration**: Confetti animation and celebration overlay shown for 2.5s after saving entry
+- **Value Proposition**: Non-authenticated users see banner encouraging sign-in to save and track streaks
+- **Empty State**: New users with 0 entries see encouraging message to start their writing journey
+- **Mobile Categories**: Dropdown selector on mobile instead of tabs for better mobile UX
+- **Dashboard Write CTA**: Prominent "Ready to write?" card on dashboard when user hasn't written today
+- **Celebration-First Reminder Modal**: Reminder setup modal leads with celebration of completing first entry
 
 ## External Dependencies
 
