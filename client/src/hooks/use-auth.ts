@@ -52,6 +52,8 @@ export function useAuth() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/auth/user"], data);
+      queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/streak"] });
     },
   });
 
@@ -62,6 +64,8 @@ export function useAuth() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/auth/user"], data);
+      queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/streak"] });
     },
   });
 
