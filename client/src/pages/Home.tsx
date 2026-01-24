@@ -30,6 +30,7 @@ export default function Home() {
   
   const { showWelcome, dismissWelcome } = useWelcomeModal(isAuthenticated, user?.id);
   const [showReminderSetup, setShowReminderSetup] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(false);
   const [streakAlertDismissed, setStreakAlertDismissed] = useState(false);
   
   // Use server-calculated value to avoid timezone mismatches
@@ -106,7 +107,18 @@ export default function Home() {
           title: "Entry Saved",
           description: "Great job! Your thought has been captured.",
         });
-        setLocation("/dashboard");
+        
+        // Check if user needs reminder setup prompt
+        const reminderSkipped = user?.id ? localStorage.getItem(`snw_reminder_setup_skipped_${user.id}`) : null;
+        const hasRemindersEnabled = user?.reminderEnabled;
+        
+        if (!hasRemindersEnabled && !reminderSkipped) {
+          // Show reminder setup modal, navigate to dashboard after
+          setPendingNavigation(true);
+          setShowReminderSetup(true);
+        } else {
+          setLocation("/dashboard");
+        }
       },
       onError: (err) => {
         toast({
@@ -130,9 +142,13 @@ export default function Home() {
   
   const handleWelcomeClose = () => {
     dismissWelcome(user?.id);
-    const reminderSkipped = user?.id ? localStorage.getItem(`snw_reminder_setup_skipped_${user.id}`) : null;
-    if (!reminderSkipped) {
-      setShowReminderSetup(true);
+  };
+  
+  const handleReminderClose = () => {
+    setShowReminderSetup(false);
+    if (pendingNavigation) {
+      setPendingNavigation(false);
+      setLocation("/dashboard");
     }
   };
 
@@ -147,7 +163,7 @@ export default function Home() {
       />
       <ReminderSetupModal 
         isOpen={showReminderSetup} 
-        onClose={() => setShowReminderSetup(false)}
+        onClose={handleReminderClose}
         userEmail={user?.email || undefined}
         userId={user?.id}
       />

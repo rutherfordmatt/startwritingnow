@@ -22,6 +22,8 @@ export function useUpdateReminderSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.reminders.get.path] });
+      // Also invalidate auth user query to update reminderEnabled
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
   });
 }

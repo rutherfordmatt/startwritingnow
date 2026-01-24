@@ -37,7 +37,7 @@ export function registerAuthRoutes(app: Express): void {
           console.error("Login error after registration:", err);
           return res.status(500).json({ message: "Registration successful but login failed" });
         }
-        res.status(201).json({ id: user.id, email: user.email, firstName: user.firstName });
+        res.status(201).json({ id: user.id, email: user.email, firstName: user.firstName, reminderEnabled: user.reminderEnabled });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -67,7 +67,8 @@ export function registerAuthRoutes(app: Express): void {
           id: fullUser.id, 
           email: fullUser.email,
           firstName: fullUser.firstName,
-          lastName: fullUser.lastName
+          lastName: fullUser.lastName,
+          reminderEnabled: fullUser.reminderEnabled
         });
       });
     })(req, res, next);
@@ -96,6 +97,7 @@ export function registerAuthRoutes(app: Express): void {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        reminderEnabled: user.reminderEnabled,
       });
     } catch (error) {
       console.error("Error fetching user:", error);

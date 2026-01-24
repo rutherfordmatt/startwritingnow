@@ -6,6 +6,7 @@ interface User {
   email: string | null;
   firstName: string | null;
   lastName: string | null;
+  reminderEnabled: boolean | null;
 }
 
 interface LoginCredentials {
