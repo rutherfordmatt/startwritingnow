@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useUserStats } from "@/hooks/use-stats";
 import { ACHIEVEMENTS, getUnlockedAchievements, getProgress } from "@shared/achievements";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
@@ -77,81 +76,120 @@ export function Achievements() {
 
   return (
     <>
-      <div className="space-y-4" data-testid="achievements-section">
+      <div className="space-y-5" data-testid="achievements-section">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Achievements</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+              <Trophy className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Achievements</h2>
+              <p className="text-xs text-muted-foreground">{unlocked.length} of {ACHIEVEMENTS.length} unlocked</p>
+            </div>
+          </div>
           <button
             onClick={() => setShowAll(true)}
             className="text-sm text-primary hover:underline flex items-center gap-1"
             data-testid="button-show-all-achievements"
           >
-            Show all
+            View all
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
         {unlocked.length > 0 ? (
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-            {unlocked.slice(0, 6).map((achievement) => {
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+            {unlocked.slice(0, 5).map((achievement, index) => {
               const Icon = iconMap[achievement.icon] || Trophy;
               return (
                 <Tooltip key={achievement.id}>
                   <TooltipTrigger asChild>
                     <motion.div
-                      initial={{ scale: 0.9, opacity: 0 }}
+                      initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: index * 0.05 }}
                       className="flex-shrink-0"
                     >
-                      <Card className="p-3 text-center hover-elevate cursor-default w-24" data-testid={`achievement-${achievement.id}`}>
-                        <div className="w-10 h-10 mx-auto mb-1.5 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-primary" />
+                      <div 
+                        className="group relative w-20 text-center cursor-default"
+                        data-testid={`achievement-${achievement.id}`}
+                      >
+                        <div className="relative mx-auto mb-2">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
+                            <Icon className="w-7 h-7 text-primary" />
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-sm border-2 border-background">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
                         </div>
-                        <h3 className="text-[11px] font-medium truncate">{achievement.title}</h3>
-                      </Card>
+                        <h3 className="text-[11px] font-medium leading-tight text-foreground/80">{achievement.title}</h3>
+                      </div>
                     </motion.div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs max-w-48 text-center">
-                    <p className="font-medium">{achievement.title}</p>
+                    <p className="font-medium text-primary">{achievement.title}</p>
                     <p className="text-muted-foreground">{achievement.description}</p>
                   </TooltipContent>
                 </Tooltip>
               );
             })}
-            {unlocked.length > 6 && (
+            {unlocked.length > 5 && (
               <button
                 onClick={() => setShowAll(true)}
-                className="flex-shrink-0 w-24 rounded-xl border border-dashed border-border flex items-center justify-center text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                className="flex-shrink-0 w-20 flex flex-col items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                +{unlocked.length - 6} more
+                <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 flex items-center justify-center transition-colors">
+                  <span className="text-lg font-semibold">+{unlocked.length - 5}</span>
+                </div>
+                <span className="text-[11px] mt-2">more</span>
               </button>
             )}
           </div>
         ) : (
-          <Card className="p-4 text-center">
-            <Trophy className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+          <div className="py-6 text-center rounded-xl bg-muted/30 border border-dashed border-border">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-muted flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-muted-foreground" />
+            </div>
             <p className="text-sm text-muted-foreground">
-              Start writing to unlock achievements!
+              Start writing to unlock your first achievement!
             </p>
-          </Card>
+          </div>
         )}
 
         {nextToUnlock.length > 0 && unlocked.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Next up</p>
-            <div className="flex gap-2">
-              {nextToUnlock.slice(0, 2).map((achievement) => (
-                <Card key={achievement.id} className="p-2 flex-1 opacity-70">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <Lock className="w-3 h-3 text-muted-foreground" />
+          <div className="space-y-2.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Up next</p>
+            <div className="space-y-2">
+              {nextToUnlock.slice(0, 2).map((achievement) => {
+                const Icon = iconMap[achievement.icon] || Trophy;
+                const progressPercent = Math.round(achievement.progress * 100);
+                return (
+                  <div 
+                    key={achievement.id} 
+                    className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{achievement.title}</p>
-                      <Progress value={achievement.progress * 100} className="h-1 mt-1" />
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="text-sm font-medium truncate">{achievement.title}</p>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">{progressPercent}%</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <motion.div 
+                          className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progressPercent}%` }}
+                          transition={{ duration: 0.5, delay: 0.2 }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -160,67 +198,85 @@ export function Achievements() {
       <Dialog open={showAll} onOpenChange={setShowAll}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-primary" />
-              All Achievements
-              <span className="text-sm font-normal text-muted-foreground ml-2">
-                {unlocked.length} / {ACHIEVEMENTS.length} unlocked
-              </span>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+                <Trophy className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="text-xl">All Achievements</span>
+                <p className="text-sm font-normal text-muted-foreground">
+                  {unlocked.length} of {ACHIEVEMENTS.length} unlocked
+                </p>
+              </div>
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-6 mt-4">
+          <div className="space-y-8 mt-6">
             {achievementsByCategory.map(({ category, label, achievements }) => (
               <div key={category}>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3">{label}</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {achievements.map((achievement) => {
+                <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">{label}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {achievements.map((achievement, index) => {
                     const Icon = iconMap[achievement.icon] || Trophy;
-                    const cardContent = (
-                      <Card className={`p-3 text-center h-full ${achievement.unlocked ? "bg-primary/5 border-primary/20" : ""}`}>
-                        <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
-                          achievement.unlocked ? "bg-primary/15" : "bg-muted"
-                        }`}>
-                          {achievement.unlocked ? (
-                            <Icon className="w-6 h-6 text-primary" />
-                          ) : (
-                            <Lock className="w-5 h-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <h4 className="text-xs font-medium mb-0.5">{achievement.title}</h4>
-                        <p className="text-[10px] text-muted-foreground leading-tight">
-                          {achievement.description}
-                        </p>
-                        {!achievement.unlocked && (
-                          <div className="mt-2">
-                            <Progress value={achievement.progress * 100} className="h-1" />
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              {Math.round(achievement.progress * 100)}%
-                            </p>
-                          </div>
-                        )}
-                      </Card>
-                    );
+                    const progressPercent = Math.round(achievement.progress * 100);
                     
                     return (
                       <motion.div
                         key={achievement.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={achievement.unlocked ? "" : "opacity-50"}
+                        transition={{ delay: index * 0.03 }}
                       >
                         {achievement.unlocked ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="cursor-default">{cardContent}</div>
+                              <div className="group p-4 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 text-center cursor-default hover:shadow-md transition-all">
+                                <div className="relative mx-auto mb-3 w-fit">
+                                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
+                                    <Icon className="w-7 h-7 text-primary" />
+                                  </div>
+                                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-sm border-2 border-background">
+                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                </div>
+                                <h4 className="text-sm font-medium mb-1">{achievement.title}</h4>
+                                <p className="text-[11px] text-muted-foreground leading-snug">
+                                  {achievement.description}
+                                </p>
+                              </div>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs">
-                              <p className="text-primary font-medium">Unlocked!</p>
-                              <p className="text-muted-foreground">{achievement.description}</p>
+                              <p className="text-green-500 font-medium flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Unlocked!
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         ) : (
-                          cardContent
+                          <div className="p-4 rounded-2xl bg-muted/30 border border-border/50 text-center opacity-60 hover:opacity-80 transition-opacity">
+                            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-muted flex items-center justify-center">
+                              <Lock className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <h4 className="text-sm font-medium mb-1">{achievement.title}</h4>
+                            <p className="text-[11px] text-muted-foreground leading-snug mb-3">
+                              {achievement.description}
+                            </p>
+                            <div className="space-y-1">
+                              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-muted-foreground/30 to-muted-foreground/50 rounded-full transition-all"
+                                  style={{ width: `${progressPercent}%` }}
+                                />
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">
+                                {progressPercent}% complete
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </motion.div>
                     );
