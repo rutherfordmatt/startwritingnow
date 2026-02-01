@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWordGoalSettings, useTodayWordCount } from "@/hooks/use-word-goal";
 import { PromptCard, type PromptCategory } from "@/components/PromptCard";
 import { CountdownTimer } from "@/components/CountdownTimer";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 import { WelcomeModal, useWelcomeModal } from "@/components/WelcomeModal";
 import { StreakAlert, useStreakAlert } from "@/components/StreakAlert";
 import { ReminderSetupModal } from "@/components/ReminderSetupModal";
@@ -14,10 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation, useSearch } from "wouter";
-import { LogOut, BarChart3, ChevronRight, Check, Target } from "lucide-react";
+import { ChevronRight, Check, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import logoBlack from "@assets/snwlogo_black_1768413266371.png";
-import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 import type { MoodValue } from "@shared/schema";
 
 export default function Home() {
@@ -288,40 +286,7 @@ export default function Home() {
         userId={user?.id}
       />
       
-      {/* Header */}
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <img src={logoBlack} alt="startwriting.now" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="startwriting.now" className="h-10 hidden dark:block" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            {isAuthenticated ? (
-              <>
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="icon" className="rounded-full" data-testid="link-dashboard">
-                    <BarChart3 className="w-6 h-6" />
-                  </Button>
-                </Link>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => logout()}
-                  className="rounded-full hover:bg-destructive/10 hover:text-destructive"
-                  data-testid="button-logout"
-                >
-                  <LogOut className="w-5 h-5" />
-                </Button>
-              </>
-            ) : (
-              <Link href="/auth" className="text-sm font-medium hover:text-primary transition-colors">
-                Log In
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
         {/* Value proposition for non-authenticated users */}

@@ -11,6 +11,7 @@ import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import Journal from "@/pages/Journal";
 import Auth from "@/pages/Auth";
 import Admin from "@/pages/Admin";
 import VerifyEmail from "@/pages/VerifyEmail";
@@ -46,6 +47,9 @@ function Router() {
       <Route path="/auth" component={Auth} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
+      </Route>
+      <Route path="/journal">
+        {() => <ProtectedRoute component={Journal} />}
       </Route>
       <Route path="/admin">
         {() => <ProtectedRoute component={Admin} />}

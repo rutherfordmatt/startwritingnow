@@ -1,16 +1,15 @@
 import { useState, useEffect } from "react";
-import { useEntries, useStreak, useDeleteEntry, useDeleteAccount } from "@/hooks/use-entries";
+import { useEntries, useStreak, useDeleteAccount } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useReminderSettings, useUpdateReminderSettings, useSendTestReminder } from "@/hooks/use-reminders";
 import { useWordGoalSettings, useUpdateWordGoal } from "@/hooks/use-word-goal";
 import { useEmailVerificationStatus } from "@/hooks/use-email-verification";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 import { WritingCalendar } from "@/components/WritingCalendar";
 import { VerificationBanner } from "@/components/VerificationBanner";
 import { Achievements } from "@/components/Achievements";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, ChevronRight, Trash2, PenLine, LogOut, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2, Smile, CloudSun, Heart, Minus, AlertCircle, CloudRain, Zap } from "lucide-react";
-import type { MoodValue } from "@shared/schema";
+import { Flame, Calendar, BookOpen, ChevronDown, ChevronRight, PenLine, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
 import { SiX, SiFacebook, SiThreads, SiBluesky } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -19,8 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import logoBlack from "@assets/snwlogo_black_1768413266371.png";
-import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -67,22 +64,11 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => ({
   label: `${hour === 0 ? "12" : hour > 12 ? hour - 12 : hour}:00 ${hour < 12 ? "AM" : "PM"}`,
 }));
 
-const MOOD_CONFIG: Record<MoodValue, { icon: typeof Smile; color: string; label: string }> = {
-  happy: { icon: Smile, label: 'Happy', color: 'text-amber-500' },
-  calm: { icon: CloudSun, label: 'Calm', color: 'text-sky-500' },
-  grateful: { icon: Heart, label: 'Grateful', color: 'text-rose-500' },
-  neutral: { icon: Minus, label: 'Neutral', color: 'text-slate-500' },
-  anxious: { icon: AlertCircle, label: 'Anxious', color: 'text-orange-500' },
-  sad: { icon: CloudRain, label: 'Sad', color: 'text-blue-500' },
-  stressed: { icon: Zap, label: 'Stressed', color: 'text-purple-500' },
-};
-
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { data: entries, isLoading: entriesLoading } = useEntries();
   const { data: streak, isLoading: streakLoading } = useStreak();
-  const { mutate: deleteEntry, isPending: isDeleting } = useDeleteEntry();
   const { mutate: deleteAccount, isPending: isDeletingAccount } = useDeleteAccount();
   const { data: reminderSettings, isLoading: reminderLoading } = useReminderSettings();
   const { mutate: updateReminders, isPending: isUpdatingReminders } = useUpdateReminderSettings();
@@ -91,7 +77,6 @@ export default function Dashboard() {
   const { data: wordGoalSettings } = useWordGoalSettings();
   const { mutate: updateWordGoal, isPending: isUpdatingWordGoal } = useUpdateWordGoal();
   const { toast } = useToast();
-  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showReminderSettings, setShowReminderSettings] = useState(false);
   const [showWordGoalSettings, setShowWordGoalSettings] = useState(false);
   const [emailInput, setEmailInput] = useState("");
@@ -146,62 +131,6 @@ export default function Dashboard() {
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'width=550,height=420');
   };
 
-  const handleExportTXT = async () => {
-    try {
-      const response = await fetch("/api/export/text", { credentials: "include" });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to export");
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `journal-export-${format(new Date(), "yyyy-MM-dd")}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast({ title: "Exported", description: "Your journal entries have been downloaded as text." });
-    } catch (err) {
-      toast({ title: "Export Failed", description: err instanceof Error ? err.message : "Failed to export", variant: "destructive" });
-    }
-  };
-
-  const handleExportPDF = async () => {
-    try {
-      const response = await fetch("/api/export/pdf", { credentials: "include" });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to export");
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `journal-export-${format(new Date(), "yyyy-MM-dd")}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast({ title: "Exported", description: "Your journal entries have been downloaded as PDF." });
-    } catch (err) {
-      toast({ title: "Export Failed", description: err instanceof Error ? err.message : "Failed to export", variant: "destructive" });
-    }
-  };
-
-  const handleDelete = (id: number) => {
-    deleteEntry(id, {
-      onSuccess: () => {
-        toast({ title: "Deleted", description: "Entry has been removed." });
-        if (expandedId === id) setExpandedId(null);
-      },
-      onError: (err) => {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
-      }
-    });
-  };
-
   const handleDeleteAccount = () => {
     deleteAccount(undefined, {
       onSuccess: () => {
@@ -227,52 +156,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
-      {/* Header */}
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <img src={logoBlack} alt="startwriting.now" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="startwriting.now" className="h-10 hidden dark:block" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2" data-testid="button-export">
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Export</span>
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportTXT} className="gap-2" data-testid="button-export-txt">
-                  <FileText className="w-4 h-4" />
-                  Export as Text
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportPDF} className="gap-2" data-testid="button-export-pdf">
-                  <FileType className="w-4 h-4" />
-                  Export as PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Link href="/">
-              <Button className="gap-2" data-testid="button-write-new">
-                <PenLine className="w-5 h-5" />
-                <span className="hidden sm:inline">Write</span>
-              </Button>
-            </Link>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => logout()}
-              className="rounded-full hover:bg-destructive/10 hover:text-destructive"
-              data-testid="button-logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         {/* Email Verification Banner */}
@@ -756,140 +640,6 @@ export default function Dashboard() {
             )}
           </AnimatePresence>
         </motion.div>
-
-        {/* Entries List */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Your Journal Entries</h2>
-
-          {!entries?.length ? (
-            <div className="text-center py-16 bg-card/50 rounded-2xl border border-dashed border-border/50">
-              <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium text-foreground">No entries yet</h3>
-              <p className="text-muted-foreground mt-2 mb-6">Start your writing journey today.</p>
-              <Link href="/">
-                <Button data-testid="button-start-writing">Start Writing</Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {entries.map((entry, i) => {
-                const isExpanded = expandedId === entry.id;
-                return (
-                  <motion.div
-                    key={entry.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.03 * i }}
-                    className="relative group"
-                    data-testid={`entry-card-${entry.id}`}
-                  >
-                    <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden shadow-sm transition-all duration-300 hover:border-primary/20">
-                      {/* Entry Header - Always visible */}
-                      <button
-                        onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                        className="w-full text-left p-5 flex items-start justify-between gap-4"
-                        data-testid={`button-expand-${entry.id}`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs font-medium uppercase tracking-wider text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full">
-                              {entry.prompt?.category || "Journal"}
-                            </span>
-                            <time className="text-xs text-muted-foreground font-mono">
-                              {format(new Date(entry.createdAt), "MMM d, yyyy")}
-                            </time>
-                          </div>
-                          <h3 className="font-serif text-lg font-medium text-foreground leading-snug line-clamp-2">
-                            {entry.prompt?.content || "Free Writing"}
-                          </h3>
-                          {!isExpanded && (
-                            <p className="text-sm text-muted-foreground mt-2 line-clamp-1">
-                              {entry.content.slice(0, 100)}...
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {entry.mood && MOOD_CONFIG[entry.mood as MoodValue] && (() => {
-                            const MoodIcon = MOOD_CONFIG[entry.mood as MoodValue].icon;
-                            const moodLabel = MOOD_CONFIG[entry.mood as MoodValue].label;
-                            return (
-                              <Tooltip delayDuration={200}>
-                                <TooltipTrigger asChild>
-                                  <span className="cursor-default">
-                                    <MoodIcon className={`w-4 h-4 ${MOOD_CONFIG[entry.mood as MoodValue].color}`} />
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="left" sideOffset={5} className="text-xs z-50">
-                                  Feeling {moodLabel.toLowerCase()}
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })()}
-                          <span className="text-xs font-mono text-muted-foreground">{entry.wordCount} words</span>
-                          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                        </div>
-                      </button>
-
-                      {/* Expanded Content */}
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="px-5 pb-5 border-t border-border/30">
-                              <div className="prose prose-sm dark:prose-invert max-w-none pt-4 font-serif text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                                {entry.content}
-                              </div>
-                              
-                              {/* Actions */}
-                              <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-border/30">
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
-                                      disabled={isDeleting}
-                                      data-testid={`button-delete-${entry.id}`}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete your journal entry.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction 
-                                        onClick={() => handleDelete(entry.id)}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
         {/* Danger Zone */}
         <motion.div

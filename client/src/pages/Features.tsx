@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { ArrowLeft, ThumbsUp, ThumbsDown, Lightbulb, Sparkles, Send } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Lightbulb, Sparkles, Send, ArrowLeft } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import logoBlack from "@assets/snwlogo_black_1768413266371.png";
-import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 
 interface Feature {
   id: number;
@@ -100,17 +98,7 @@ export default function Features() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <img src={logoBlack} alt="startwriting.now" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="startwriting.now" className="h-10 hidden dark:block" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <motion.div

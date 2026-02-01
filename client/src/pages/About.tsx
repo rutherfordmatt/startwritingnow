@@ -1,11 +1,9 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { PenLine, Shield, Clock, Target, Sparkles, Heart, Lock, ArrowLeft, Smile, Download, Trophy } from "lucide-react";
-import logoBlack from "@assets/snwlogo_black_1768413266371.png";
-import logoWhite from "@assets/snwlogo_white_1768413266371.png";
+import { PenLine, Clock, Target, Sparkles, Heart, Lock, ArrowLeft, Smile, Download, Trophy, Shield } from "lucide-react";
 
 export default function About() {
   // Scroll to top on mount
@@ -62,17 +60,7 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <img src={logoBlack} alt="startwriting.now" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="startwriting.now" className="h-10 hidden dark:block" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <motion.div
