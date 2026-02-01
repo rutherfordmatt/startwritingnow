@@ -91,7 +91,6 @@ async function sendReminders(): Promise<void> {
 
 // Weekly summary sending time (6 PM / 18:00 on Sundays in user's timezone)
 const WEEKLY_SUMMARY_TIME = '18:00';
-const WEEKLY_SUMMARY_DAY = 0; // Sunday = 0
 
 async function sendWeeklySummaries(): Promise<void> {
   // Get users with verified emails who haven't disabled summaries
@@ -121,10 +120,12 @@ async function sendWeeklySummaries(): Promise<void> {
       const timezone = user.reminderTimezone || 'America/New_York';
       
       // Check if it's Sunday 6 PM in user's timezone
+      // Use 'i' for ISO day of week (1=Monday, 7=Sunday)
       const userCurrentTime = format(now, 'HH:mm', { timeZone: timezone });
-      const userCurrentDay = parseInt(format(now, 'e', { timeZone: timezone })) % 7; // 0 = Sunday
+      const userCurrentDayISO = parseInt(format(now, 'i', { timeZone: timezone })); // 1-7, Sunday=7
+      const isSunday = userCurrentDayISO === 7;
       
-      if (userCurrentDay !== WEEKLY_SUMMARY_DAY || userCurrentTime !== WEEKLY_SUMMARY_TIME) {
+      if (!isSunday || userCurrentTime !== WEEKLY_SUMMARY_TIME) {
         continue;
       }
       
@@ -155,27 +156,36 @@ async function sendWeeklySummaries(): Promise<void> {
       const wordsThisWeek = weeklyEntries.reduce((sum, e) => sum + e.wordCount, 0);
       const totalEntries = allEntries.length;
       
-      // Calculate current streak
+      // Calculate current streak by counting unique consecutive days
       let currentStreak = 0;
-      const sortedEntries = allEntries.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
       
-      if (sortedEntries.length > 0) {
-        const today = startOfDay(now);
-        let checkDate = today;
+      if (allEntries.length > 0) {
+        // Get unique dates (dedupe entries on same day)
+        const uniqueDates = [...new Set(
+          allEntries.map(e => startOfDay(new Date(e.createdAt)).getTime())
+        )].sort((a, b) => b - a); // Sort descending (most recent first)
         
-        for (const entry of sortedEntries) {
-          const entryDate = startOfDay(new Date(entry.createdAt));
-          const daysDiff = Math.floor((checkDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
+        const today = startOfDay(now);
+        const todayTime = today.getTime();
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        
+        // Check if most recent entry is today or yesterday to start counting
+        const mostRecentDate = uniqueDates[0];
+        const daysSinceMostRecent = Math.round((todayTime - mostRecentDate) / oneDayMs);
+        
+        if (daysSinceMostRecent <= 1) {
+          // Start counting from most recent date
+          let expectedDate = mostRecentDate;
           
-          if (daysDiff === 0 || daysDiff === 1) {
-            if (daysDiff === 1) {
-              checkDate = entryDate;
+          for (const dateTime of uniqueDates) {
+            if (dateTime === expectedDate) {
+              currentStreak++;
+              expectedDate -= oneDayMs; // Move to previous day
+            } else if (dateTime < expectedDate) {
+              // Gap in streak, stop counting
+              break;
             }
-            currentStreak++;
-          } else {
-            break;
+            // If dateTime > expectedDate, skip (shouldn't happen with sorted desc)
           }
         }
       }
