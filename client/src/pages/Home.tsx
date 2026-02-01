@@ -316,7 +316,7 @@ export default function Home() {
             hasWrittenToday={hasWrittenToday}
             userId={user?.id}
             onDismiss={() => setStreakAlertDismissed(true)}
-            skipAtRisk={entries && entries.length > 0}
+            skipAtRisk={!!(entries && entries.length > 0)}
           />
         )}
         
