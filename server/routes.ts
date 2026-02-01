@@ -312,11 +312,15 @@ export async function registerRoutes(
         }
       }
       
+      // Count feature suggestions by this user
+      const featureSuggestions = await storage.countFeatureSuggestionsByUser(userId);
+      
       res.json({
         totalEntries,
         totalWords,
         currentStreak: streakData.currentStreak,
         longestStreak: streakData.longestStreak,
+        featureSuggestions,
         categoryCounts,
       });
     } catch (err) {
@@ -742,10 +746,14 @@ export async function registerRoutes(
     try {
       const input = suggestFeatureSchema.parse(req.body);
       
+      // Get userId if authenticated
+      const userId = req.user?.id || null;
+      
       const feature = await storage.createFeature({
         title: input.title.trim(),
         description: input.description.trim(),
         isUserSuggested: true,
+        suggestedByUserId: userId,
       });
       
       res.status(201).json(feature);

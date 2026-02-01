@@ -3,7 +3,7 @@ export interface Achievement {
   title: string;
   description: string;
   icon: string;
-  category: 'streak' | 'entries' | 'words' | 'category';
+  category: 'streak' | 'entries' | 'words' | 'category' | 'community';
   requirement: number;
   checkUnlocked: (stats: UserStats) => boolean;
 }
@@ -13,6 +13,7 @@ export interface UserStats {
   totalWords: number;
   currentStreak: number;
   longestStreak: number;
+  featureSuggestions: number;
   categoryCounts: {
     Life: number;
     Career: number;
@@ -161,6 +162,15 @@ export const ACHIEVEMENTS: Achievement[] = [
     requirement: 10,
     checkUnlocked: (stats) => stats.categoryCounts.Mindfulness >= 10,
   },
+  {
+    id: 'idea_maker',
+    title: 'Idea Maker',
+    description: 'Suggest a feature idea',
+    icon: 'lightbulb',
+    category: 'community',
+    requirement: 1,
+    checkUnlocked: (stats) => stats.featureSuggestions >= 1,
+  },
 ];
 
 export function getUnlockedAchievements(stats: UserStats): Achievement[] {
@@ -194,6 +204,8 @@ export function getProgress(achievement: Achievement, stats: UserStats): number 
       return Math.min(stats.categoryCounts.Gratitude / 10, 1);
     case 'mindful_moment':
       return Math.min(stats.categoryCounts.Mindfulness / 10, 1);
+    case 'idea_maker':
+      return Math.min(stats.featureSuggestions / 1, 1);
     default:
       return 0;
   }

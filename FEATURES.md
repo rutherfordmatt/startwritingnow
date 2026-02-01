@@ -28,11 +28,12 @@
 
 ### Gamification & Motivation
 - **Streak Tracking**: Current and longest streak displayed
-- **15 Achievements**: Unlockable badges for milestones
+- **16 Achievements**: Unlockable badges for milestones
   - Entry milestones (1, 10, 25, 50, 100 entries)
   - Streak badges (3, 7, 14, 30 days)
   - Word count goals (1k, 5k, 10k words)
   - Category exploration
+  - Community (Idea Maker - suggest a feature)
 - **Achievement Progress**: Visual progress bars for locked achievements
 - **Celebration Overlay**: Confetti animation after completing entries
 - **Streak Alerts**: Milestone celebrations at 7, 14, 21, 30, 50, 100, 365 days

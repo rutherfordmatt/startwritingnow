@@ -51,6 +51,7 @@ export const features = pgTable("features", {
   upvotes: integer("upvotes").default(0).notNull(),
   downvotes: integer("downvotes").default(0).notNull(),
   isUserSuggested: boolean("is_user_suggested").default(false).notNull(),
+  suggestedByUserId: text("suggested_by_user_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

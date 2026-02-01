@@ -78,6 +78,7 @@ export interface IStorage {
   createFeature(feature: InsertFeature): Promise<Feature>;
   voteOnFeature(featureId: number, visitorId: string, voteType: 'up' | 'down'): Promise<Feature | undefined>;
   getVisitorVotes(visitorId: string): Promise<{ featureId: number; voteType: string }[]>;
+  countFeatureSuggestionsByUser(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -513,6 +514,13 @@ export class DatabaseStorage implements IStorage {
     })
     .from(featureVotes)
     .where(eq(featureVotes.visitorId, visitorId));
+  }
+
+  async countFeatureSuggestionsByUser(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(features)
+      .where(eq(features.suggestedByUserId, userId));
+    return Number(result[0]?.count || 0);
   }
 }
 

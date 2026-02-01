@@ -71,8 +71,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Achievements System
 - **Location**: Displayed on Dashboard only (no dedicated page)
-- **Categories**: Entries (1, 10, 25, 50, 100), Streaks (3, 7, 14, 30 days), Words (1k, 5k, 10k), Category exploration
-- **Total**: 15 achievements
+- **Categories**: Entries (1, 10, 25, 50, 100), Streaks (3, 7, 14, 30 days), Words (1k, 5k, 10k), Category exploration, Community (Idea Maker)
+- **Total**: 16 achievements
 - **API**: GET `/api/stats` returns user stats for achievement calculation
 - **Files**: `shared/achievements.ts` defines all achievements, `client/src/components/Achievements.tsx` displays them
 - **Display**: Shows unlocked badges with icons, progress bars for next achievements

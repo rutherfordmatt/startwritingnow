@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   Pencil, Layers, Book, Library, Trophy, Flame, Calendar,
-  Star, Crown, Type, PenTool, Feather, Compass, Heart, Sun, Lock, ChevronRight
+  Star, Crown, Type, PenTool, Feather, Compass, Heart, Sun, Lock, ChevronRight, Lightbulb
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -36,6 +36,7 @@ const iconMap: Record<string, typeof Pencil> = {
   'compass': Compass,
   'heart': Heart,
   'sun': Sun,
+  'lightbulb': Lightbulb,
 };
 
 const categoryLabels: Record<string, string> = {
@@ -43,9 +44,10 @@ const categoryLabels: Record<string, string> = {
   'streak': 'Streak Badges',
   'words': 'Word Count',
   'category': 'Category Explorer',
+  'community': 'Community',
 };
 
-const categoryOrder = ['entries', 'streak', 'words', 'category'];
+const categoryOrder = ['entries', 'streak', 'words', 'category', 'community'];
 
 export function Achievements() {
   const { data: stats, isLoading } = useUserStats();
@@ -98,8 +100,8 @@ export function Achievements() {
         </div>
 
         {unlocked.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
-            {unlocked.slice(0, 5).map((achievement, index) => {
+          <div className="flex flex-wrap gap-3">
+            {unlocked.slice(0, 8).map((achievement, index) => {
               const Icon = iconMap[achievement.icon] || Trophy;
               return (
                 <Tooltip key={achievement.id}>
@@ -108,10 +110,9 @@ export function Achievements() {
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex-shrink-0"
                     >
                       <div 
-                        className="group relative w-20 text-center cursor-default"
+                        className="group w-20 text-center cursor-default"
                         data-testid={`achievement-${achievement.id}`}
                       >
                         <div className="mx-auto mb-2">
@@ -130,17 +131,6 @@ export function Achievements() {
                 </Tooltip>
               );
             })}
-            {unlocked.length > 5 && (
-              <button
-                onClick={() => setShowAll(true)}
-                className="flex-shrink-0 w-20 flex flex-col items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 flex items-center justify-center transition-colors">
-                  <span className="text-lg font-semibold">+{unlocked.length - 5}</span>
-                </div>
-                <span className="text-[11px] mt-2">more</span>
-              </button>
-            )}
           </div>
         ) : (
           <div className="py-6 text-center rounded-xl bg-muted/30 border border-dashed border-border">
