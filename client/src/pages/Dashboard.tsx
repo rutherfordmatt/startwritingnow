@@ -7,8 +7,9 @@ import { useEmailVerificationStatus } from "@/hooks/use-email-verification";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { WritingCalendar } from "@/components/WritingCalendar";
 import { VerificationBanner } from "@/components/VerificationBanner";
+import { Achievements } from "@/components/Achievements";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, ChevronRight, Trash2, PenLine, LogOut, FileJson, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
+import { Download, Flame, Calendar, BookOpen, ChevronDown, ChevronRight, Trash2, PenLine, LogOut, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
 import { SiX, SiFacebook, SiThreads, SiBluesky } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -20,7 +21,6 @@ import { Link, useLocation } from "wouter";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
 import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 import { useToast } from "@/hooks/use-toast";
-import { jsPDF } from "jspdf";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -130,110 +130,48 @@ export default function Dashboard() {
     window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'width=550,height=420');
   };
 
-  const handleExportJSON = () => {
-    if (!entries) return;
-    const exportData = entries.map(e => ({
-      date: format(new Date(e.createdAt), 'yyyy-MM-dd HH:mm'),
-      prompt: e.prompt?.content || 'Free Writing',
-      category: e.prompt?.category || 'Journal',
-      content: e.content,
-      wordCount: e.wordCount,
-    }));
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `journal_export_${format(new Date(), 'yyyy-MM-dd')}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    toast({ title: "Exported", description: "Your journal entries have been downloaded as JSON." });
-  };
-
-  const handleExportTXT = () => {
-    if (!entries) return;
-    let textContent = "JOURNAL EXPORT\n";
-    textContent += `Exported: ${format(new Date(), 'MMMM d, yyyy')}\n`;
-    textContent += "=".repeat(50) + "\n\n";
-    
-    entries.forEach((e, index) => {
-      textContent += `Entry ${index + 1}\n`;
-      textContent += "-".repeat(30) + "\n";
-      textContent += `Date: ${format(new Date(e.createdAt), 'MMMM d, yyyy h:mm a')}\n`;
-      textContent += `Category: ${e.prompt?.category || 'Journal'}\n`;
-      textContent += `Prompt: ${e.prompt?.content || 'Free Writing'}\n`;
-      textContent += `Word Count: ${e.wordCount}\n\n`;
-      textContent += e.content + "\n\n";
-      textContent += "=".repeat(50) + "\n\n";
-    });
-    
-    const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(textContent);
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `journal_export_${format(new Date(), 'yyyy-MM-dd')}.txt`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    toast({ title: "Exported", description: "Your journal entries have been downloaded as TXT." });
-  };
-
-  const handleExportPDF = () => {
-    if (!entries) return;
-    
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    const maxWidth = pageWidth - margin * 2;
-    let yPos = 20;
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("Journal Export", margin, yPos);
-    yPos += 10;
-    
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Exported: ${format(new Date(), 'MMMM d, yyyy')}`, margin, yPos);
-    yPos += 15;
-    
-    entries.forEach((e, index) => {
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
+  const handleExportTXT = async () => {
+    try {
+      const response = await fetch("/api/export/text", { credentials: "include" });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to export");
       }
-      
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(`${e.prompt?.category || 'Journal'} - ${format(new Date(e.createdAt), 'MMM d, yyyy')}`, margin, yPos);
-      yPos += 7;
-      
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(10);
-      const promptLines = doc.splitTextToSize(e.prompt?.content || 'Free Writing', maxWidth);
-      doc.text(promptLines, margin, yPos);
-      yPos += promptLines.length * 5 + 5;
-      
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      const contentLines = doc.splitTextToSize(e.content, maxWidth);
-      
-      contentLines.forEach((line: string) => {
-        if (yPos > 280) {
-          doc.addPage();
-          yPos = 20;
-        }
-        doc.text(line, margin, yPos);
-        yPos += 5;
-      });
-      
-      doc.setFontSize(8);
-      doc.setTextColor(128);
-      doc.text(`${e.wordCount} words`, margin, yPos);
-      doc.setTextColor(0);
-      yPos += 15;
-    });
-    
-    doc.save(`journal_export_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
-    toast({ title: "Exported", description: "Your journal entries have been downloaded as PDF." });
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `journal-export-${format(new Date(), "yyyy-MM-dd")}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "Exported", description: "Your journal entries have been downloaded as text." });
+    } catch (err) {
+      toast({ title: "Export Failed", description: err instanceof Error ? err.message : "Failed to export", variant: "destructive" });
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const response = await fetch("/api/export/pdf", { credentials: "include" });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to export");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `journal-export-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "Exported", description: "Your journal entries have been downloaded as PDF." });
+    } catch (err) {
+      toast({ title: "Export Failed", description: err instanceof Error ? err.message : "Failed to export", variant: "destructive" });
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -291,13 +229,9 @@ export default function Dashboard() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportJSON} className="gap-2" data-testid="button-export-json">
-                  <FileJson className="w-4 h-4" />
-                  Export as JSON
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportTXT} className="gap-2" data-testid="button-export-txt">
                   <FileText className="w-4 h-4" />
-                  Export as TXT
+                  Export as Text
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportPDF} className="gap-2" data-testid="button-export-pdf">
                   <FileType className="w-4 h-4" />
@@ -499,6 +433,11 @@ export default function Dashboard() {
             <WritingCalendar entries={entries} daysToShow={30} />
           </div>
         )}
+
+        {/* Achievements Section */}
+        <div className="mb-10">
+          <Achievements />
+        </div>
 
         {/* Reminder Settings Card */}
         <motion.div

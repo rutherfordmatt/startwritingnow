@@ -4,10 +4,12 @@ import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { api, updateReminderSettingsSchema, updateWordGoalSchema, updateEntryMoodSchema } from "@shared/routes";
-import { insertEntrySchema } from "@shared/schema";
+import { insertEntrySchema, MOOD_OPTIONS } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
 import { sendVerificationEmail, sendWelcomeEmail, sendGoodbyeEmail } from "./email";
+import PDFDocument from "pdfkit";
+import { format } from "date-fns";
 
 function getAppUrl(): string {
   // In production, REPLIT_DOMAINS contains the deployed domain(s)
@@ -278,6 +280,165 @@ export async function registerRoutes(
       }
       console.error("Error updating entry mood:", err);
       res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+
+  // User Stats for Achievements (Protected)
+  app.get("/api/stats", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const entries = await storage.getUserEntries(userId);
+      const streakData = await storage.getStreak(userId);
+      
+      // Calculate stats
+      const totalEntries = entries.length;
+      const totalWords = entries.reduce((sum, e) => sum + e.wordCount, 0);
+      
+      // Count by category
+      const categoryCounts = {
+        Life: 0,
+        Career: 0,
+        Gratitude: 0,
+        Creativity: 0,
+        Mindfulness: 0,
+      };
+      
+      for (const entry of entries) {
+        if (entry.prompt?.category) {
+          const cat = entry.prompt.category as keyof typeof categoryCounts;
+          if (cat in categoryCounts) {
+            categoryCounts[cat]++;
+          }
+        }
+      }
+      
+      res.json({
+        totalEntries,
+        totalWords,
+        currentStreak: streakData.currentStreak,
+        longestStreak: streakData.longestStreak,
+        categoryCounts,
+      });
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Export Entries Routes
+  
+  // Export as Text (Protected)
+  app.get("/api/export/text", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const entries = await storage.getUserEntries(userId);
+      
+      if (entries.length === 0) {
+        return res.status(400).json({ message: "No entries to export" });
+      }
+      
+      let textContent = "startwriting.now - Journal Export\n";
+      textContent += "=" .repeat(40) + "\n\n";
+      
+      for (const entry of entries) {
+        const date = format(new Date(entry.createdAt), "MMMM d, yyyy 'at' h:mm a");
+        textContent += `Date: ${date}\n`;
+        
+        if (entry.prompt) {
+          textContent += `Category: ${entry.prompt.category}\n`;
+          textContent += `Prompt: ${entry.prompt.content}\n`;
+        }
+        
+        if (entry.mood) {
+          const moodOption = MOOD_OPTIONS.find(m => m.value === entry.mood);
+          if (moodOption) {
+            textContent += `Mood: ${moodOption.label}\n`;
+          }
+        }
+        
+        textContent += `Words: ${entry.wordCount}\n`;
+        textContent += "\n" + entry.content + "\n";
+        textContent += "\n" + "-".repeat(40) + "\n\n";
+      }
+      
+      res.setHeader("Content-Type", "text/plain");
+      res.setHeader("Content-Disposition", `attachment; filename="journal-export-${format(new Date(), "yyyy-MM-dd")}.txt"`);
+      res.send(textContent);
+    } catch (err) {
+      console.error("Error exporting text:", err);
+      res.status(500).json({ message: "Failed to export entries" });
+    }
+  });
+  
+  // Export as PDF (Protected)
+  app.get("/api/export/pdf", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const entries = await storage.getUserEntries(userId);
+      
+      if (entries.length === 0) {
+        return res.status(400).json({ message: "No entries to export" });
+      }
+      
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="journal-export-${format(new Date(), "yyyy-MM-dd")}.pdf"`);
+      
+      const doc = new PDFDocument({ margin: 50 });
+      doc.pipe(res);
+      
+      // Title
+      doc.fontSize(24).font("Helvetica-Bold").text("startwriting.now", { align: "center" });
+      doc.fontSize(14).font("Helvetica").text("Journal Export", { align: "center" });
+      doc.moveDown(2);
+      
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        const date = format(new Date(entry.createdAt), "MMMM d, yyyy 'at' h:mm a");
+        
+        // Add new page if not first entry and approaching bottom
+        if (i > 0 && doc.y > 650) {
+          doc.addPage();
+        } else if (i > 0) {
+          doc.moveDown(1);
+          doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke("#e0e0e0");
+          doc.moveDown(1);
+        }
+        
+        // Date
+        doc.fontSize(12).font("Helvetica-Bold").text(date);
+        
+        // Category and prompt
+        if (entry.prompt) {
+          doc.fontSize(10).font("Helvetica").fillColor("#666666")
+            .text(`${entry.prompt.category} - ${entry.prompt.content}`);
+        }
+        
+        // Mood
+        if (entry.mood) {
+          const moodOption = MOOD_OPTIONS.find(m => m.value === entry.mood);
+          if (moodOption) {
+            doc.fontSize(10).font("Helvetica").fillColor("#666666")
+              .text(`Mood: ${moodOption.label}`);
+          }
+        }
+        
+        doc.moveDown(0.5);
+        
+        // Content
+        doc.fontSize(11).font("Helvetica").fillColor("#000000").text(entry.content, {
+          align: "left",
+          lineGap: 4,
+        });
+        
+        // Word count
+        doc.moveDown(0.5);
+        doc.fontSize(9).fillColor("#999999").text(`${entry.wordCount} words`);
+      }
+      
+      doc.end();
+    } catch (err) {
+      console.error("Error exporting PDF:", err);
+      res.status(500).json({ message: "Failed to export entries" });
     }
   });
 
