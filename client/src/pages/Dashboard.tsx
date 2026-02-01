@@ -813,13 +813,13 @@ export default function Dashboard() {
                             const MoodIcon = MOOD_CONFIG[entry.mood as MoodValue].icon;
                             const moodLabel = MOOD_CONFIG[entry.mood as MoodValue].label;
                             return (
-                              <Tooltip>
+                              <Tooltip delayDuration={200}>
                                 <TooltipTrigger asChild>
                                   <span className="cursor-default">
                                     <MoodIcon className={`w-4 h-4 ${MOOD_CONFIG[entry.mood as MoodValue].color}`} />
                                   </span>
                                 </TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs">
+                                <TooltipContent side="left" sideOffset={5} className="text-xs z-50">
                                   Feeling {moodLabel.toLowerCase()}
                                 </TooltipContent>
                               </Tooltip>
