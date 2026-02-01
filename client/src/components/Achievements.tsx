@@ -11,6 +11,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Pencil, Layers, Book, Library, Trophy, Flame, Calendar,
   Star, Crown, Type, PenTool, Feather, Compass, Heart, Sun, Lock, ChevronRight
 } from "lucide-react";
@@ -90,19 +95,26 @@ export function Achievements() {
             {unlocked.slice(0, 6).map((achievement) => {
               const Icon = iconMap[achievement.icon] || Trophy;
               return (
-                <motion.div
-                  key={achievement.id}
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="flex-shrink-0"
-                >
-                  <Card className="p-3 text-center hover-elevate cursor-default w-24" data-testid={`achievement-${achievement.id}`}>
-                    <div className="w-10 h-10 mx-auto mb-1.5 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 className="text-[11px] font-medium truncate">{achievement.title}</h3>
-                  </Card>
-                </motion.div>
+                <Tooltip key={achievement.id}>
+                  <TooltipTrigger asChild>
+                    <motion.div
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="flex-shrink-0"
+                    >
+                      <Card className="p-3 text-center hover-elevate cursor-default w-24" data-testid={`achievement-${achievement.id}`}>
+                        <div className="w-10 h-10 mx-auto mb-1.5 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Icon className="w-5 h-5 text-primary" />
+                        </div>
+                        <h3 className="text-[11px] font-medium truncate">{achievement.title}</h3>
+                      </Card>
+                    </motion.div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs max-w-48 text-center">
+                    <p className="font-medium">{achievement.title}</p>
+                    <p className="text-muted-foreground">{achievement.description}</p>
+                  </TooltipContent>
+                </Tooltip>
               );
             })}
             {unlocked.length > 6 && (
@@ -164,6 +176,32 @@ export function Achievements() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {achievements.map((achievement) => {
                     const Icon = iconMap[achievement.icon] || Trophy;
+                    const cardContent = (
+                      <Card className={`p-3 text-center h-full ${achievement.unlocked ? "bg-primary/5 border-primary/20" : ""}`}>
+                        <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
+                          achievement.unlocked ? "bg-primary/15" : "bg-muted"
+                        }`}>
+                          {achievement.unlocked ? (
+                            <Icon className="w-6 h-6 text-primary" />
+                          ) : (
+                            <Lock className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <h4 className="text-xs font-medium mb-0.5">{achievement.title}</h4>
+                        <p className="text-[10px] text-muted-foreground leading-tight">
+                          {achievement.description}
+                        </p>
+                        {!achievement.unlocked && (
+                          <div className="mt-2">
+                            <Progress value={achievement.progress * 100} className="h-1" />
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {Math.round(achievement.progress * 100)}%
+                            </p>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                    
                     return (
                       <motion.div
                         key={achievement.id}
@@ -171,29 +209,19 @@ export function Achievements() {
                         animate={{ opacity: 1, y: 0 }}
                         className={achievement.unlocked ? "" : "opacity-50"}
                       >
-                        <Card className={`p-3 text-center h-full ${achievement.unlocked ? "bg-primary/5 border-primary/20" : ""}`}>
-                          <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
-                            achievement.unlocked ? "bg-primary/15" : "bg-muted"
-                          }`}>
-                            {achievement.unlocked ? (
-                              <Icon className="w-6 h-6 text-primary" />
-                            ) : (
-                              <Lock className="w-5 h-5 text-muted-foreground" />
-                            )}
-                          </div>
-                          <h4 className="text-xs font-medium mb-0.5">{achievement.title}</h4>
-                          <p className="text-[10px] text-muted-foreground leading-tight">
-                            {achievement.description}
-                          </p>
-                          {!achievement.unlocked && (
-                            <div className="mt-2">
-                              <Progress value={achievement.progress * 100} className="h-1" />
-                              <p className="text-[10px] text-muted-foreground mt-1">
-                                {Math.round(achievement.progress * 100)}%
-                              </p>
-                            </div>
-                          )}
-                        </Card>
+                        {achievement.unlocked ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="cursor-default">{cardContent}</div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              <p className="text-primary font-medium">Unlocked!</p>
+                              <p className="text-muted-foreground">{achievement.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          cardContent
+                        )}
                       </motion.div>
                     );
                   })}
