@@ -906,7 +906,16 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Footer */}
-        <footer className="mt-16 pt-8 pb-4 text-center border-t border-border/30">
+        <footer className="mt-16 pt-8 pb-4 text-center border-t border-border/30 space-y-2">
+          <p className="text-sm text-muted-foreground/60 flex items-center justify-center gap-3">
+            <Link href="/about" className="hover:text-foreground transition-colors">
+              About
+            </Link>
+            <span>·</span>
+            <Link href="/features" className="hover:text-foreground transition-colors" data-testid="link-features">
+              Feature Requests
+            </Link>
+          </p>
           <p className="text-sm text-muted-foreground/60">
             Created with Love by{" "}
             <a 

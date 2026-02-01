@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { 
-  prompts, entries, users,
-  type InsertEntry, type Prompt, type Entry, type User
+  prompts, entries, users, features, featureVotes,
+  type InsertEntry, type Prompt, type Entry, type User, type Feature, type InsertFeature
 } from "@shared/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 
@@ -72,6 +72,12 @@ export interface IStorage {
   // User Management
   deleteUser(userId: string): Promise<boolean>;
   deleteUserEntries(userId: string): Promise<number>;
+  
+  // Features
+  getAllFeatures(): Promise<Feature[]>;
+  createFeature(feature: InsertFeature): Promise<Feature>;
+  voteOnFeature(featureId: number, visitorId: string, voteType: 'up' | 'down'): Promise<Feature | undefined>;
+  getVisitorVotes(visitorId: string): Promise<{ featureId: number; voteType: string }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -415,6 +421,98 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
     
     return this.getWordGoalSettings(userId);
+  }
+
+  // Features
+  async getAllFeatures(): Promise<Feature[]> {
+    return db.select()
+      .from(features)
+      .orderBy(desc(sql`${features.upvotes} - ${features.downvotes}`));
+  }
+
+  async createFeature(feature: InsertFeature): Promise<Feature> {
+    const [newFeature] = await db.insert(features)
+      .values(feature)
+      .returning();
+    return newFeature;
+  }
+
+  async voteOnFeature(featureId: number, visitorId: string, voteType: 'up' | 'down'): Promise<Feature | undefined> {
+    // Check if feature exists first
+    const [feature] = await db.select().from(features).where(eq(features.id, featureId));
+    if (!feature) return undefined;
+    
+    // Check if visitor already voted on this feature
+    const [existingVote] = await db.select()
+      .from(featureVotes)
+      .where(and(eq(featureVotes.featureId, featureId), eq(featureVotes.visitorId, visitorId)));
+    
+    if (existingVote) {
+      // If same vote type, remove the vote (toggle off)
+      if (existingVote.voteType === voteType) {
+        await db.delete(featureVotes)
+          .where(eq(featureVotes.id, existingVote.id));
+        
+        // Decrement the appropriate vote count with guard against negative
+        if (voteType === 'up') {
+          await db.update(features)
+            .set({ upvotes: sql`GREATEST(${features.upvotes} - 1, 0)` })
+            .where(eq(features.id, featureId));
+        } else {
+          await db.update(features)
+            .set({ downvotes: sql`GREATEST(${features.downvotes} - 1, 0)` })
+            .where(eq(features.id, featureId));
+        }
+      } else {
+        // Change vote type
+        await db.update(featureVotes)
+          .set({ voteType })
+          .where(eq(featureVotes.id, existingVote.id));
+        
+        // Update both counts with guards
+        if (voteType === 'up') {
+          await db.update(features)
+            .set({ 
+              upvotes: sql`${features.upvotes} + 1`,
+              downvotes: sql`GREATEST(${features.downvotes} - 1, 0)`
+            })
+            .where(eq(features.id, featureId));
+        } else {
+          await db.update(features)
+            .set({ 
+              upvotes: sql`GREATEST(${features.upvotes} - 1, 0)`,
+              downvotes: sql`${features.downvotes} + 1`
+            })
+            .where(eq(features.id, featureId));
+        }
+      }
+    } else {
+      // New vote
+      await db.insert(featureVotes)
+        .values({ featureId, visitorId, voteType });
+      
+      if (voteType === 'up') {
+        await db.update(features)
+          .set({ upvotes: sql`${features.upvotes} + 1` })
+          .where(eq(features.id, featureId));
+      } else {
+        await db.update(features)
+          .set({ downvotes: sql`${features.downvotes} + 1` })
+          .where(eq(features.id, featureId));
+      }
+    }
+    
+    const [updated] = await db.select().from(features).where(eq(features.id, featureId));
+    return updated;
+  }
+
+  async getVisitorVotes(visitorId: string): Promise<{ featureId: number; voteType: string }[]> {
+    return db.select({
+      featureId: featureVotes.featureId,
+      voteType: featureVotes.voteType,
+    })
+    .from(featureVotes)
+    .where(eq(featureVotes.visitorId, visitorId));
   }
 }
 

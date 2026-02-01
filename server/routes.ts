@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { api, updateReminderSettingsSchema, updateWordGoalSchema, updateEntryMoodSchema } from "@shared/routes";
-import { insertEntrySchema, MOOD_OPTIONS } from "@shared/schema";
+import { insertEntrySchema, MOOD_OPTIONS, voteFeatureSchema, suggestFeatureSchema } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
 import { sendVerificationEmail, sendWelcomeEmail, sendGoodbyeEmail } from "./email";
@@ -668,6 +668,97 @@ export async function registerRoutes(
     }
     
     res.json({ success: true, message: "Email verified successfully! Welcome aboard." });
+  });
+
+  // Feature Voting Routes (Public)
+  const INITIAL_FEATURES = [
+    { title: "Mood Trends Dashboard", description: "Visualize how your mood changes over weeks/months with interactive charts" },
+    { title: "Word Cloud", description: "Visual display of your most-used words and recurring themes" },
+    { title: "AI Writing Insights", description: "AI-powered analysis highlighting recurring themes and personal growth patterns" },
+    { title: "Favorite Entries", description: "Star entries to revisit your best writing and meaningful moments" },
+    { title: "Anonymous Prompt Sharing", description: "Submit your own prompts for others to use anonymously" },
+    { title: "Share Achievements", description: "Share milestone badges on social media to celebrate your progress" },
+    { title: "Browser Extension", description: "Quick-capture thoughts from anywhere with a browser extension" },
+    { title: "Custom Themes", description: "Personalize your writing space with custom color schemes and fonts" },
+  ];
+
+  async function seedFeatures() {
+    const existing = await storage.getAllFeatures();
+    if (existing.length === 0) {
+      console.log("Seeding initial features...");
+      for (const feature of INITIAL_FEATURES) {
+        await storage.createFeature({ ...feature, isUserSuggested: false });
+      }
+      console.log("Features seeded.");
+    }
+  }
+  
+  seedFeatures();
+
+  // Get all features
+  app.get("/api/features", async (req, res) => {
+    const allFeatures = await storage.getAllFeatures();
+    const visitorId = req.query.visitorId as string | undefined;
+    
+    let votes: { featureId: number; voteType: string }[] = [];
+    if (visitorId) {
+      votes = await storage.getVisitorVotes(visitorId);
+    }
+    
+    res.json({ features: allFeatures, votes });
+  });
+
+  // Vote on a feature
+  app.post("/api/features/:id/vote", async (req, res) => {
+    try {
+      const featureId = parseInt(req.params.id, 10);
+      
+      if (isNaN(featureId)) {
+        return res.status(400).json({ message: "Invalid feature ID" });
+      }
+      
+      const input = voteFeatureSchema.parse(req.body);
+      
+      const updated = await storage.voteOnFeature(featureId, input.visitorId, input.voteType);
+      if (!updated) {
+        return res.status(404).json({ message: "Feature not found" });
+      }
+      
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      console.error("Error voting on feature:", err);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
+
+  // Suggest a new feature
+  app.post("/api/features", async (req, res) => {
+    try {
+      const input = suggestFeatureSchema.parse(req.body);
+      
+      const feature = await storage.createFeature({
+        title: input.title.trim(),
+        description: input.description.trim(),
+        isUserSuggested: true,
+      });
+      
+      res.status(201).json(feature);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      console.error("Error suggesting feature:", err);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
   });
 
   return httpServer;

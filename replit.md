@@ -101,6 +101,22 @@ Preferred communication style: Simple, everyday language.
   - `snw_streak_alert_dismissed_[userId]`: Tracks daily streak alert dismissal
   - `snw_last_milestone_[userId]`: Tracks last celebrated milestone
 
+### Feature Voting System
+- **Location**: Public page at /features, linked from footer on all pages
+- **Purpose**: Allow users to vote on future features and suggest new ideas
+- **Database Tables**: `features` (id, title, description, upvotes, downvotes, isUserSuggested, createdAt), `feature_votes` (id, featureId, visitorId, voteType)
+- **API Endpoints**:
+  - GET `/api/features?visitorId={id}` - Get all features with visitor's votes
+  - POST `/api/features/:id/vote` - Vote on feature (body: { visitorId, voteType })
+  - POST `/api/features` - Suggest new feature (body: { title, description })
+- **Voting Logic**:
+  - Anonymous voting using visitor ID stored in localStorage
+  - Click same vote to toggle off, click opposite to change vote
+  - Net score displayed as upvotes minus downvotes
+  - Features sorted by net score (descending)
+- **Initial Features**: 8 pre-seeded features (Mood Trends Dashboard, Word Cloud, AI Writing Insights, Favorite Entries, Anonymous Prompt Sharing, Share Achievements, Browser Extension, Custom Themes)
+- **User Suggestions**: Marked with "Community Idea" badge
+
 ### UX Improvements (Anxiety Reduction Philosophy)
 - **Unsaved Work Warning**: beforeunload handler warns users before leaving with unsaved content (uses isDirty flag)
 - **Timer Count-Up**: After 3:00, timer continues counting up as "Bonus time" rather than stopping, reducing pressure

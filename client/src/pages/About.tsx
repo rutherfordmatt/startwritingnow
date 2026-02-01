@@ -168,7 +168,12 @@ export default function About() {
           </Link>
         </motion.section>
 
-        <footer className="pt-12 pb-8 text-center">
+        <footer className="pt-12 pb-8 text-center space-y-2">
+          <p className="text-sm text-muted-foreground/60 flex items-center justify-center gap-3">
+            <Link href="/features" className="hover:text-foreground transition-colors" data-testid="link-features">
+              Feature Requests
+            </Link>
+          </p>
           <p className="text-sm text-muted-foreground/60">
             Created with Love by{" "}
             <a 

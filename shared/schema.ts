@@ -42,3 +42,49 @@ export const insertEntrySchema = createInsertSchema(entries).omit({
 export type Entry = typeof entries.$inferSelect;
 export type InsertEntry = z.infer<typeof insertEntrySchema>;
 export type Prompt = typeof prompts.$inferSelect;
+
+// Feature voting system
+export const features = pgTable("features", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  upvotes: integer("upvotes").default(0).notNull(),
+  downvotes: integer("downvotes").default(0).notNull(),
+  isUserSuggested: boolean("is_user_suggested").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const featureVotes = pgTable("feature_votes", {
+  id: serial("id").primaryKey(),
+  featureId: integer("feature_id").notNull().references(() => features.id),
+  visitorId: text("visitor_id").notNull(),
+  voteType: text("vote_type").notNull(), // "up" or "down"
+});
+
+// Zod schema for voting
+export const voteFeatureSchema = z.object({
+  visitorId: z.string().min(1).max(100),
+  voteType: z.enum(['up', 'down']),
+});
+
+// Zod schema for suggesting features
+export const suggestFeatureSchema = z.object({
+  title: z.string().min(3).max(200),
+  description: z.string().min(10).max(1000),
+});
+
+export const insertFeatureSchema = createInsertSchema(features).omit({
+  id: true,
+  createdAt: true,
+  upvotes: true,
+  downvotes: true,
+});
+
+export const insertFeatureVoteSchema = createInsertSchema(featureVotes).omit({
+  id: true,
+});
+
+export type Feature = typeof features.$inferSelect;
+export type InsertFeature = z.infer<typeof insertFeatureSchema>;
+export type FeatureVote = typeof featureVotes.$inferSelect;
+export type InsertFeatureVote = z.infer<typeof insertFeatureVoteSchema>;
