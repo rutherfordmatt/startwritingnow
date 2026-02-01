@@ -41,7 +41,29 @@ Preferred communication style: Simple, everyday language.
 - **users**: User accounts with username, hashed password, reminder preferences, email verification fields, and weekly summary settings (weeklySummaryEnabled, lastWeeklySummaryAt)
 - **sessions**: Authentication sessions
 - **prompts**: 250 writing prompts with categories (Life/Career/Gratitude/Creativity/Mindfulness, 50 each)
-- **entries**: User journal entries with word count tracking
+- **entries**: User journal entries with word count tracking and mood field
+
+### Mood Tracking
+- **Flow**: After saving a journal entry, users see a mood selector overlay with 7 emotions (happy, calm, grateful, neutral, anxious, sad, stressed)
+- **Optional**: Users can skip mood selection
+- **API**: PATCH `/api/entries/:id/mood` to update entry mood
+- **Schema**: `mood` field in entries table (varchar, nullable)
+- **UI**: MoodSelector component appears between entry save and celebration overlay
+
+### Data Export
+- **Formats**: PDF and Text (no JSON)
+- **Endpoints**: GET `/api/export/pdf` and GET `/api/export/text`
+- **Content**: Includes date, prompt, category, mood, content, and word count
+- **Server-side**: Uses PDFKit for PDF generation
+- **UI**: Export dropdown on Dashboard with Text and PDF options
+
+### Achievements System
+- **Location**: Displayed on Dashboard only (no dedicated page)
+- **Categories**: Entries (1, 10, 25, 50, 100), Streaks (3, 7, 14, 30 days), Words (1k, 5k, 10k), Category exploration
+- **Total**: 15 achievements
+- **API**: GET `/api/stats` returns user stats for achievement calculation
+- **Files**: `shared/achievements.ts` defines all achievements, `client/src/components/Achievements.tsx` displays them
+- **Display**: Shows unlocked badges with icons, progress bars for next achievements
 
 ### Email Verification System
 - **Flow**: Users receive verification email on signup, must verify before enabling reminders
