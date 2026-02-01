@@ -292,8 +292,8 @@ export default function Home() {
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="hover:opacity-80 transition-opacity">
-            <img src={logoBlack} alt="startwriting.now" className="h-8 dark:hidden" />
-            <img src={logoWhite} alt="startwriting.now" className="h-8 hidden dark:block" />
+            <img src={logoBlack} alt="startwriting.now" className="h-10 dark:hidden" />
+            <img src={logoWhite} alt="startwriting.now" className="h-10 hidden dark:block" />
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -301,7 +301,7 @@ export default function Home() {
               <>
                 <Link href="/dashboard">
                   <Button variant="ghost" size="icon" className="rounded-full" data-testid="link-dashboard">
-                    <BarChart3 className="w-5 h-5" />
+                    <BarChart3 className="w-6 h-6" />
                   </Button>
                 </Link>
                 <Button 
@@ -311,7 +311,7 @@ export default function Home() {
                   className="rounded-full hover:bg-destructive/10 hover:text-destructive"
                   data-testid="button-logout"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-5 h-5" />
                 </Button>
               </>
             ) : (
