@@ -2,7 +2,7 @@
 
 ## Overview
 
-A frictionless 3-minute micro-journaling web application that helps users develop a daily writing habit. Users receive daily prompts in two categories (Life and Career), write timed entries, and track their writing streaks. The app emphasizes a distraction-free writing experience with a clean, minimal interface.
+A frictionless 3-minute micro-journaling web application that helps users develop a daily writing habit. Users receive daily prompts in five categories (Life, Career, Gratitude, Creativity, Mindfulness), write timed entries, and track their writing streaks. The app emphasizes a distraction-free writing experience with a clean, minimal interface.
 
 ## User Preferences
 
@@ -38,9 +38,9 @@ Preferred communication style: Simple, everyday language.
 - **Protected Routes**: Authentication check via `isAuthenticated` middleware and client-side route guards
 
 ### Database Schema
-- **users**: User accounts with username, hashed password, reminder preferences, and email verification fields (isEmailVerified, emailVerificationToken, emailVerificationExpires, welcomeEmailSentAt)
+- **users**: User accounts with username, hashed password, reminder preferences, email verification fields, and weekly summary settings (weeklySummaryEnabled, lastWeeklySummaryAt)
 - **sessions**: Authentication sessions
-- **prompts**: Writing prompts with categories (Life/Career)
+- **prompts**: 250 writing prompts with categories (Life/Career/Gratitude/Creativity/Mindfulness, 50 each)
 - **entries**: User journal entries with word count tracking
 
 ### Email Verification System
@@ -58,6 +58,13 @@ Preferred communication style: Simple, everyday language.
   - Configurable reminder time and timezone
   - Emails include a random writing prompt and link to the app
   - Test reminder functionality to verify email delivery
+
+### Weekly Summary Emails
+- **Schedule**: Sent on Sunday evenings at 6 PM in each user's timezone
+- **Content**: Stats including entries this week, words written, current streak, and total entries
+- **Encouragement**: Dynamic messaging based on user activity level
+- **Database Fields**: `weeklySummaryEnabled` (default true), `lastWeeklySummaryAt`
+- **Requirements**: Users must have verified email to receive summaries
 
 ### User Retention Features
 - **Welcome Modal**: 3-step onboarding modal for first-time authenticated users explaining the 3-minute journaling concept
