@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useRandomPrompt, useCreateEntry, usePromptById, useStreak, useEntries } from "@/hooks/use-entries";
+import { useRandomPrompt, useCreateEntry, usePromptById, useStreak, useEntries, useUpdateEntryMood } from "@/hooks/use-entries";
 import { useAuth } from "@/hooks/use-auth";
 import { useWordGoalSettings, useTodayWordCount } from "@/hooks/use-word-goal";
 import { PromptCard, type PromptCategory } from "@/components/PromptCard";
@@ -9,6 +9,7 @@ import { WelcomeModal, useWelcomeModal } from "@/components/WelcomeModal";
 import { StreakAlert, useStreakAlert } from "@/components/StreakAlert";
 import { ReminderSetupModal } from "@/components/ReminderSetupModal";
 import { WelcomeBackPill } from "@/components/WelcomeBackPill";
+import { MoodSelector } from "@/components/MoodSelector";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,7 @@ import { LogOut, BarChart3, ChevronRight, Check, Target } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
 import logoWhite from "@assets/snwlogo_white_1768413266371.png";
+import type { MoodValue } from "@shared/schema";
 
 export default function Home() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -75,8 +77,11 @@ export default function Home() {
   const prompt = urlPromptId ? urlPrompt : randomPrompt;
   const promptLoading = urlPromptId ? urlPromptLoading : randomPromptLoading;
   const { mutate: createEntry, isPending: isSaving } = useCreateEntry();
+  const { mutate: updateMood } = useUpdateEntryMood();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [showMoodSelector, setShowMoodSelector] = useState(false);
+  const [savedEntryId, setSavedEntryId] = useState<number | null>(null);
 
   const [content, setContent] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
@@ -138,30 +143,15 @@ export default function Home() {
       promptId: prompt?.id,
       wordCount: content.trim().split(/\s+/).length,
     }, {
-      onSuccess: () => {
-        // Show success celebration
+      onSuccess: (entry) => {
+        setIsDirty(false);
+        setContent("");
+        setSavedEntryId(entry.id);
+        setShowMoodSelector(true);
+        
+        // Pre-calculate streak for celebration
         const newStreakCount = (streak?.currentStreak || 0) + (hasWrittenToday ? 0 : 1);
         setSuccessStreakCount(newStreakCount);
-        setShowSuccessState(true);
-        setIsDirty(false); // Mark as clean after successful save
-        setContent(""); // Clear content
-        
-        // After celebration, check for reminders or navigate
-        saveTimeoutRef.current = setTimeout(() => {
-          setShowSuccessState(false);
-          
-          // Check if user needs reminder setup prompt
-          const reminderSkipped = user?.id ? localStorage.getItem(`snw_reminder_setup_skipped_${user.id}`) : null;
-          const hasRemindersEnabled = user?.reminderEnabled;
-          
-          if (!hasRemindersEnabled && !reminderSkipped) {
-            // Show reminder setup modal, navigate to dashboard after
-            setPendingNavigation(true);
-            setShowReminderSetup(true);
-          } else {
-            setLocation("/dashboard");
-          }
-        }, 2500);
       },
       onError: (err) => {
         toast({
@@ -171,6 +161,38 @@ export default function Home() {
         });
       }
     });
+  };
+  
+  const showCelebrationAndProceed = () => {
+    setShowSuccessState(true);
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      setShowSuccessState(false);
+      
+      // Check if user needs reminder setup prompt
+      const reminderSkipped = user?.id ? localStorage.getItem(`snw_reminder_setup_skipped_${user.id}`) : null;
+      const hasRemindersEnabled = user?.reminderEnabled;
+      
+      if (!hasRemindersEnabled && !reminderSkipped) {
+        setPendingNavigation(true);
+        setShowReminderSetup(true);
+      } else {
+        setLocation("/dashboard");
+      }
+    }, 2500);
+  };
+  
+  const handleMoodSelect = (mood: MoodValue) => {
+    setShowMoodSelector(false);
+    if (savedEntryId) {
+      updateMood({ id: savedEntryId, mood });
+    }
+    showCelebrationAndProceed();
+  };
+  
+  const handleMoodSkip = () => {
+    setShowMoodSelector(false);
+    showCelebrationAndProceed();
   };
 
   // Restore draft if returning from login
@@ -200,6 +222,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
+      {/* Mood Selector Overlay */}
+      <MoodSelector
+        isOpen={showMoodSelector}
+        onSelect={handleMoodSelect}
+        onSkip={handleMoodSkip}
+      />
+      
       {/* Success Celebration Overlay */}
       <AnimatePresence>
         {showSuccessState && (

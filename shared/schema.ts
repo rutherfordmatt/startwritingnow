@@ -17,7 +17,21 @@ export const entries = pgTable("entries", {
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   wordCount: integer("word_count").notNull(),
+  mood: varchar("mood", { length: 20 }), // Optional: happy, calm, grateful, neutral, anxious, sad, stressed
 });
+
+// Available moods for the UI
+export const MOOD_OPTIONS = [
+  { value: 'happy', label: 'Happy', emoji: '😊' },
+  { value: 'calm', label: 'Calm', emoji: '😌' },
+  { value: 'grateful', label: 'Grateful', emoji: '🙏' },
+  { value: 'neutral', label: 'Neutral', emoji: '😐' },
+  { value: 'anxious', label: 'Anxious', emoji: '😰' },
+  { value: 'sad', label: 'Sad', emoji: '😢' },
+  { value: 'stressed', label: 'Stressed', emoji: '😤' },
+] as const;
+
+export type MoodValue = typeof MOOD_OPTIONS[number]['value'];
 
 export const insertEntrySchema = createInsertSchema(entries).omit({ 
   id: true, 

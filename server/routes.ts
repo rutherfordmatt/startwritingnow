@@ -3,7 +3,7 @@ import type { Server } from "http";
 import crypto from "crypto";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { api, updateReminderSettingsSchema, updateWordGoalSchema } from "@shared/routes";
+import { api, updateReminderSettingsSchema, updateWordGoalSchema, updateEntryMoodSchema } from "@shared/routes";
 import { insertEntrySchema } from "@shared/schema";
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
@@ -249,6 +249,36 @@ export async function registerRoutes(
       return res.status(404).json({ message: "Entry not found" });
     }
     res.status(204).send();
+  });
+
+  // Update Entry Mood (Protected)
+  app.patch("/api/entries/:id/mood", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const entryId = parseInt(req.params.id, 10);
+      
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+      
+      const input = updateEntryMoodSchema.parse(req.body);
+      const updated = await storage.updateEntryMood(entryId, userId, input.mood);
+      
+      if (!updated) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+      
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      console.error("Error updating entry mood:", err);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
   });
 
   // Reminder Settings Routes

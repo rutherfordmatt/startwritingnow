@@ -37,6 +37,10 @@ export const updateWordGoalSchema = z.object({
   dailyWordGoal: z.number().nullable(),
 });
 
+export const updateEntryMoodSchema = z.object({
+  mood: z.enum(['happy', 'calm', 'grateful', 'neutral', 'anxious', 'sad', 'stressed']),
+});
+
 export const adminStatsSchema = z.object({
   totalUsers: z.number(),
   usersWithEmail: z.number(),
@@ -180,6 +184,16 @@ export const api = {
       path: '/api/entries/:id',
       responses: {
         204: z.void(),
+        401: z.object({ message: z.string() }),
+        404: errorSchemas.notFound,
+      },
+    },
+    updateMood: {
+      method: 'PATCH' as const,
+      path: '/api/entries/:id/mood',
+      input: updateEntryMoodSchema,
+      responses: {
+        200: z.custom<typeof entries.$inferSelect>(),
         401: z.object({ message: z.string() }),
         404: errorSchemas.notFound,
       },

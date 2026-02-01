@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl, type InsertEntry } from "@shared/routes";
+import type { MoodValue } from "@shared/schema";
 
 export function useEntries() {
   return useQuery({
@@ -86,6 +87,37 @@ export function usePromptById(id: number | null) {
     enabled: !!id,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
+  });
+}
+
+export function useUpdateEntryMood() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, mood }: { id: number; mood: MoodValue }) => {
+      const res = await fetch(`/api/entries/${id}/mood`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mood }),
+        credentials: "include",
+      });
+      
+      if (res.status === 401) {
+        throw new Error("Unauthorized");
+      }
+      
+      if (res.status === 404) {
+        throw new Error("Entry not found");
+      }
+      
+      if (!res.ok) {
+        throw new Error("Failed to update mood");
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.entries.list.path] });
+    },
   });
 }
 

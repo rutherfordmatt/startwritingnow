@@ -47,6 +47,7 @@ export interface IStorage {
   getUserEntries(userId: string): Promise<(Entry & { prompt: Prompt | null })[]>;
   deleteEntry(id: number, userId: string): Promise<boolean>;
   getStreak(userId: string): Promise<{ currentStreak: number, longestStreak: number, lastEntryDate: string | null, hasWrittenToday: boolean }>;
+  updateEntryMood(id: number, userId: string, mood: string): Promise<Entry | undefined>;
   
   // Reminders
   getReminderSettings(userId: string): Promise<ReminderSettings | undefined>;
@@ -116,12 +117,21 @@ export class DatabaseStorage implements IStorage {
       content: entries.content,
       createdAt: entries.createdAt,
       wordCount: entries.wordCount,
+      mood: entries.mood,
       prompt: prompts
     })
     .from(entries)
     .leftJoin(prompts, eq(entries.promptId, prompts.id))
     .where(eq(entries.userId, userId))
     .orderBy(desc(entries.createdAt));
+  }
+
+  async updateEntryMood(id: number, userId: string, mood: string): Promise<Entry | undefined> {
+    const [updated] = await db.update(entries)
+      .set({ mood })
+      .where(and(eq(entries.id, id), eq(entries.userId, userId)))
+      .returning();
+    return updated;
   }
 
   async deleteEntry(id: number, userId: string): Promise<boolean> {
