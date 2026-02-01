@@ -39,6 +39,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const TIMEZONES = [
   { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -806,10 +811,18 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2 shrink-0">
                           {entry.mood && MOOD_CONFIG[entry.mood as MoodValue] && (() => {
                             const MoodIcon = MOOD_CONFIG[entry.mood as MoodValue].icon;
+                            const moodLabel = MOOD_CONFIG[entry.mood as MoodValue].label;
                             return (
-                              <span title={MOOD_CONFIG[entry.mood as MoodValue].label}>
-                                <MoodIcon className={`w-4 h-4 ${MOOD_CONFIG[entry.mood as MoodValue].color}`} />
-                              </span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="cursor-default">
+                                    <MoodIcon className={`w-4 h-4 ${MOOD_CONFIG[entry.mood as MoodValue].color}`} />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  Feeling {moodLabel.toLowerCase()}
+                                </TooltipContent>
+                              </Tooltip>
                             );
                           })()}
                           <span className="text-xs font-mono text-muted-foreground">{entry.wordCount} words</span>
