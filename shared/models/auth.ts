@@ -25,6 +25,8 @@ export const users = pgTable("users", {
   reminderTime: varchar("reminder_time").default("09:00"),
   reminderTimezone: varchar("reminder_timezone").default("America/New_York"),
   dailyWordGoal: integer("daily_word_goal"),
+  weeklySummaryEnabled: boolean("weekly_summary_enabled").default(true),
+  lastWeeklySummaryAt: timestamp("last_weekly_summary_at"),
   isEmailVerified: boolean("is_email_verified").default(false),
   emailVerificationToken: varchar("email_verification_token"),
   emailVerificationExpires: timestamp("email_verification_expires"),

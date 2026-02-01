@@ -1,9 +1,10 @@
 import cron from 'node-cron';
 import { db } from './db';
-import { users, prompts } from '@shared/schema';
-import { eq, and, isNotNull } from 'drizzle-orm';
-import { sendReminderEmail } from './email';
+import { users, prompts, entries } from '@shared/schema';
+import { eq, and, isNotNull, gte, sql } from 'drizzle-orm';
+import { sendReminderEmail, sendWeeklySummaryEmail } from './email';
 import { format } from 'date-fns-tz';
+import { subDays, startOfDay } from 'date-fns';
 
 function getAppUrl(): string {
   // In production, REPLIT_DOMAINS contains the deployed domain(s)
@@ -88,9 +89,126 @@ async function sendReminders(): Promise<void> {
   }
 }
 
+// Weekly summary sending time (6 PM / 18:00 on Sundays in user's timezone)
+const WEEKLY_SUMMARY_TIME = '18:00';
+const WEEKLY_SUMMARY_DAY = 0; // Sunday = 0
+
+async function sendWeeklySummaries(): Promise<void> {
+  // Get users with verified emails who haven't disabled summaries
+  const eligibleUsers = await db.select()
+    .from(users)
+    .where(
+      and(
+        eq(users.isEmailVerified, true),
+        isNotNull(users.email)
+      )
+    );
+
+  if (eligibleUsers.length === 0) {
+    return;
+  }
+
+  const now = new Date();
+  const oneWeekAgo = startOfDay(subDays(now, 7));
+  
+  for (const user of eligibleUsers) {
+    if (!user.email) continue;
+    
+    // Skip if user has disabled weekly summaries
+    if (user.weeklySummaryEnabled === false) continue;
+    
+    try {
+      const timezone = user.reminderTimezone || 'America/New_York';
+      
+      // Check if it's Sunday 6 PM in user's timezone
+      const userCurrentTime = format(now, 'HH:mm', { timeZone: timezone });
+      const userCurrentDay = parseInt(format(now, 'e', { timeZone: timezone })) % 7; // 0 = Sunday
+      
+      if (userCurrentDay !== WEEKLY_SUMMARY_DAY || userCurrentTime !== WEEKLY_SUMMARY_TIME) {
+        continue;
+      }
+      
+      // Check if we already sent a summary this week (within last 6 days to avoid edge cases)
+      if (user.lastWeeklySummaryAt) {
+        const daysSinceLastSummary = Math.floor((now.getTime() - new Date(user.lastWeeklySummaryAt).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSinceLastSummary < 6) {
+          continue;
+        }
+      }
+      
+      // Get user's entries from the past 7 days
+      const weeklyEntries = await db.select()
+        .from(entries)
+        .where(
+          and(
+            eq(entries.userId, user.id),
+            gte(entries.createdAt, oneWeekAgo)
+          )
+        );
+      
+      // Get total entries count
+      const allEntries = await db.select()
+        .from(entries)
+        .where(eq(entries.userId, user.id));
+      
+      const entriesThisWeek = weeklyEntries.length;
+      const wordsThisWeek = weeklyEntries.reduce((sum, e) => sum + e.wordCount, 0);
+      const totalEntries = allEntries.length;
+      
+      // Calculate current streak
+      let currentStreak = 0;
+      const sortedEntries = allEntries.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      if (sortedEntries.length > 0) {
+        const today = startOfDay(now);
+        let checkDate = today;
+        
+        for (const entry of sortedEntries) {
+          const entryDate = startOfDay(new Date(entry.createdAt));
+          const daysDiff = Math.floor((checkDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (daysDiff === 0 || daysDiff === 1) {
+            if (daysDiff === 1) {
+              checkDate = entryDate;
+            }
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+      }
+      
+      const success = await sendWeeklySummaryEmail({
+        to: user.email,
+        username: getDisplayName(user),
+        appUrl: APP_URL,
+        entriesThisWeek,
+        wordsThisWeek,
+        currentStreak,
+        totalEntries,
+      });
+      
+      if (success) {
+        // Update last summary sent timestamp
+        await db.update(users)
+          .set({ lastWeeklySummaryAt: now })
+          .where(eq(users.id, user.id));
+        console.log(`Weekly summary sent to ${user.email} (${timezone})`);
+      } else {
+        console.error(`Failed to send weekly summary to ${user.email}`);
+      }
+    } catch (error) {
+      console.error(`Error processing weekly summary for user ${user.id}:`, error);
+    }
+  }
+}
+
 export function startReminderScheduler(): void {
   cron.schedule('* * * * *', async () => {
     await sendReminders();
+    await sendWeeklySummaries();
   });
 
   console.log('Reminder scheduler started - checking every minute');

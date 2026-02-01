@@ -10,6 +10,16 @@ interface ReminderEmailData {
   appUrl: string;
 }
 
+interface WeeklySummaryEmailData {
+  to: string;
+  username: string;
+  appUrl: string;
+  entriesThisWeek: number;
+  wordsThisWeek: number;
+  currentStreak: number;
+  totalEntries: number;
+}
+
 const FRIENDLY_GREETINGS = [
   "Time to reflect!",
   "Your daily moment of clarity awaits",
@@ -231,6 +241,106 @@ export async function sendReminderEmail({ to, username, promptContent, promptId,
     return true;
   } catch (error) {
     console.error('Failed to send reminder email:', error);
+    return false;
+  }
+}
+
+const WEEKLY_SUMMARY_SUBJECTS = [
+  "Your week in writing",
+  "Weekly writing recap",
+  "Your journaling week in review",
+  "This week's writing journey",
+];
+
+export async function sendWeeklySummaryEmail({ 
+  to, 
+  username, 
+  appUrl, 
+  entriesThisWeek, 
+  wordsThisWeek, 
+  currentStreak,
+  totalEntries 
+}: WeeklySummaryEmailData): Promise<boolean> {
+  const subject = WEEKLY_SUMMARY_SUBJECTS[Math.floor(Math.random() * WEEKLY_SUMMARY_SUBJECTS.length)];
+  
+  const getStreakMessage = () => {
+    if (currentStreak >= 7) return `Amazing! You're on a ${currentStreak}-day streak. Keep it going!`;
+    if (currentStreak > 0) return `You're on a ${currentStreak}-day streak. A few more days to reach 7!`;
+    return "Start a new streak this week!";
+  };
+  
+  const getEncouragement = () => {
+    if (entriesThisWeek >= 7) return "Perfect week! You wrote every single day.";
+    if (entriesThisWeek >= 5) return "Great consistency this week!";
+    if (entriesThisWeek >= 3) return "Solid effort! A few more entries next week?";
+    if (entriesThisWeek >= 1) return "You showed up this week. That matters.";
+    return "This week is a fresh start. Just 3 minutes can make a difference.";
+  };
+
+  try {
+    await resend.emails.send({
+      from: 'startwriting.now <noreply@startwriting.now>',
+      to: [to],
+      subject: `${subject} - startwriting.now`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Your Week in Review</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Hey ${username}, here's how you did!</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 12px 12px;">
+            <!-- Stats Grid -->
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+              <div style="flex: 1; background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 32px; font-weight: bold; color: #667eea;">${entriesThisWeek}</div>
+                <div style="font-size: 12px; color: #888; text-transform: uppercase;">Entries</div>
+              </div>
+              <div style="flex: 1; background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 32px; font-weight: bold; color: #667eea;">${wordsThisWeek.toLocaleString()}</div>
+                <div style="font-size: 12px; color: #888; text-transform: uppercase;">Words</div>
+              </div>
+              <div style="flex: 1; background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 32px; font-weight: bold; color: #f97316;">${currentStreak}</div>
+                <div style="font-size: 12px; color: #888; text-transform: uppercase;">Day Streak</div>
+              </div>
+            </div>
+            
+            <!-- Streak Message -->
+            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #f97316; margin-bottom: 20px;">
+              <p style="margin: 0; color: #666;">${getStreakMessage()}</p>
+            </div>
+            
+            <!-- Encouragement -->
+            <p style="margin: 0 0 25px 0; color: #666; font-size: 15px;">${getEncouragement()}</p>
+            
+            <!-- All-time stat -->
+            <p style="margin: 0 0 25px 0; color: #888; font-size: 14px; text-align: center;">
+              You've written <strong>${totalEntries}</strong> journal entries in total.
+            </p>
+            
+            <div style="text-align: center;">
+              <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Start This Week Strong</a>
+            </div>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+            <p style="margin: 0;">You're receiving this weekly summary because you have an active account.</p>
+            <p style="margin: 5px 0 0 0;">Keep writing, keep growing.</p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error('Failed to send weekly summary email:', error);
     return false;
   }
 }
