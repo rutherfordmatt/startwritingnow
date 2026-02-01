@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { ArrowLeft, ThumbsUp, ThumbsDown, Lightbulb, Sparkles, Send } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
 import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 
@@ -38,6 +39,7 @@ function getVisitorId(): string {
 }
 
 export default function Features() {
+  const { user } = useAuth();
   const [visitorId] = useState(getVisitorId);
   const [suggestionTitle, setSuggestionTitle] = useState("");
   const [suggestionDescription, setSuggestionDescription] = useState("");
@@ -129,68 +131,70 @@ export default function Features() {
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          {!showSuggestionForm ? (
-            <Button 
-              onClick={() => setShowSuggestionForm(true)}
-              className="gap-2"
-              data-testid="button-suggest-feature"
-            >
-              <Lightbulb className="w-4 h-4" />
-              Suggest a Feature
-            </Button>
-          ) : (
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-primary" />
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-8"
+          >
+            {!showSuggestionForm ? (
+              <Button 
+                onClick={() => setShowSuggestionForm(true)}
+                className="gap-2"
+                data-testid="button-suggest-feature"
+              >
+                <Lightbulb className="w-4 h-4" />
                 Suggest a Feature
-              </h3>
-              <form onSubmit={handleSuggest} className="space-y-4">
-                <div>
-                  <Input
-                    placeholder="Feature title"
-                    value={suggestionTitle}
-                    onChange={(e) => setSuggestionTitle(e.target.value)}
-                    data-testid="input-suggestion-title"
-                  />
-                </div>
-                <div>
-                  <Textarea
-                    placeholder="Describe your feature idea in detail..."
-                    value={suggestionDescription}
-                    onChange={(e) => setSuggestionDescription(e.target.value)}
-                    className="min-h-[100px]"
-                    data-testid="input-suggestion-description"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="submit"
-                    disabled={suggestionTitle.trim().length < 3 || suggestionDescription.trim().length < 10 || suggestMutation.isPending}
-                    className="gap-2"
-                    data-testid="button-submit-suggestion"
-                  >
-                    <Send className="w-4 h-4" />
-                    {suggestMutation.isPending ? "Submitting..." : "Submit"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setShowSuggestionForm(false)}
-                    data-testid="button-cancel-suggestion"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </Card>
-          )}
-        </motion.div>
+              </Button>
+            ) : (
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-primary" />
+                  Suggest a Feature
+                </h3>
+                <form onSubmit={handleSuggest} className="space-y-4">
+                  <div>
+                    <Input
+                      placeholder="Feature title"
+                      value={suggestionTitle}
+                      onChange={(e) => setSuggestionTitle(e.target.value)}
+                      data-testid="input-suggestion-title"
+                    />
+                  </div>
+                  <div>
+                    <Textarea
+                      placeholder="Describe your feature idea in detail..."
+                      value={suggestionDescription}
+                      onChange={(e) => setSuggestionDescription(e.target.value)}
+                      className="min-h-[100px]"
+                      data-testid="input-suggestion-description"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      disabled={suggestionTitle.trim().length < 3 || suggestionDescription.trim().length < 10 || suggestMutation.isPending}
+                      className="gap-2"
+                      data-testid="button-submit-suggestion"
+                    >
+                      <Send className="w-4 h-4" />
+                      {suggestMutation.isPending ? "Submitting..." : "Submit"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowSuggestionForm(false)}
+                      data-testid="button-cancel-suggestion"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+            )}
+          </motion.div>
+        )}
 
         {isLoading ? (
           <div className="space-y-4">
