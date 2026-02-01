@@ -114,14 +114,9 @@ export function Achievements() {
                         className="group relative w-20 text-center cursor-default"
                         data-testid={`achievement-${achievement.id}`}
                       >
-                        <div className="relative mx-auto mb-2">
-                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
-                            <Icon className="w-7 h-7 text-primary" />
-                          </div>
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-sm border-2 border-background">
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
+                        <div className="mx-auto mb-2">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400/20 via-emerald-400/15 to-green-500/10 border border-green-500/30 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
+                            <Icon className="w-7 h-7 text-green-600 dark:text-green-400" />
                           </div>
                         </div>
                         <h3 className="text-[11px] font-medium leading-tight text-foreground/80">{achievement.title}</h3>
@@ -230,15 +225,10 @@ export function Achievements() {
                         {achievement.unlocked ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="group p-4 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 text-center cursor-default hover:shadow-md transition-all">
-                                <div className="relative mx-auto mb-3 w-fit">
-                                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-                                    <Icon className="w-7 h-7 text-primary" />
-                                  </div>
-                                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-sm border-2 border-background">
-                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
+                              <div className="group p-4 rounded-2xl bg-gradient-to-br from-green-400/10 via-emerald-400/5 to-transparent border border-green-500/20 text-center cursor-default hover:shadow-md transition-all">
+                                <div className="mx-auto mb-3 w-fit">
+                                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400/25 via-emerald-400/20 to-green-500/15 flex items-center justify-center">
+                                    <Icon className="w-7 h-7 text-green-600 dark:text-green-400" />
                                   </div>
                                 </div>
                                 <h4 className="text-sm font-medium mb-1">{achievement.title}</h4>
@@ -248,12 +238,7 @@ export function Achievements() {
                               </div>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs">
-                              <p className="text-green-500 font-medium flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                Unlocked!
-                              </p>
+                              <p className="text-green-500 font-medium">Unlocked!</p>
                             </TooltipContent>
                           </Tooltip>
                         ) : (
