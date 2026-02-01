@@ -50,12 +50,24 @@ Preferred communication style: Simple, everyday language.
 - **Schema**: `mood` field in entries table (varchar, nullable)
 - **UI**: MoodSelector component appears between entry save and celebration overlay
 
+### Navigation Structure
+- **Navbar Component**: Shared across all pages (`client/src/components/Navbar.tsx`)
+- **Authenticated Users**: Write (PenLine icon), Journal (BookOpen icon), Dashboard (LayoutDashboard icon), Theme toggle, Logout
+- **Non-authenticated Users**: Theme toggle, Log In button
+- **Pages**:
+  - `/` - Home/Write page with writing interface
+  - `/journal` - Journal entries list with mood icons and export (protected)
+  - `/dashboard` - Stats, achievements, calendar, settings (protected)
+  - `/about` - About page (public)
+  - `/features` - Feature voting page (public)
+  - `/auth` - Login/signup page
+
 ### Data Export
 - **Formats**: PDF and Text (no JSON)
 - **Endpoints**: GET `/api/export/pdf` and GET `/api/export/text`
 - **Content**: Includes date, prompt, category, mood, content, and word count
 - **Server-side**: Uses PDFKit for PDF generation
-- **UI**: Export dropdown on Dashboard with Text and PDF options
+- **UI**: Export dropdown on Journal page with Text and PDF options
 
 ### Achievements System
 - **Location**: Displayed on Dashboard only (no dedicated page)
