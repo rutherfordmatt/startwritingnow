@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -44,6 +44,11 @@ export default function Features() {
   const [suggestionTitle, setSuggestionTitle] = useState("");
   const [suggestionDescription, setSuggestionDescription] = useState("");
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const { data, isLoading, error } = useQuery<FeaturesResponse>({
     queryKey: ["/api/features", visitorId],
@@ -95,15 +100,15 @@ export default function Features() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
-      <header className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-        <Link href="/">
-          <div className="flex items-center gap-2 cursor-pointer">
-            <img src={logoBlack} alt="startwriting.now" className="h-8 dark:hidden" />
-            <img src={logoWhite} alt="startwriting.now" className="h-8 hidden dark:block" />
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <img src={logoBlack} alt="startwriting.now" className="h-10 dark:hidden" />
+            <img src={logoWhite} alt="startwriting.now" className="h-10 hidden dark:block" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
           </div>
-        </Link>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
         </div>
       </header>
 
