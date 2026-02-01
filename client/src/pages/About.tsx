@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { PenLine, Shield, Clock, Target, Sparkles, Heart, Lock, ArrowLeft } from "lucide-react";
+import { PenLine, Shield, Clock, Target, Sparkles, Heart, Lock, ArrowLeft, Smile, Download, Trophy } from "lucide-react";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
 import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 
@@ -32,6 +32,21 @@ export default function About() {
       icon: Heart,
       title: "Distraction-Free",
       description: "A clean, minimal interface designed to help you focus on what matters most: your thoughts."
+    },
+    {
+      icon: Smile,
+      title: "Mood Tracking",
+      description: "Log how you're feeling after each entry. Discover patterns between your writing and emotions over time."
+    },
+    {
+      icon: Trophy,
+      title: "Achievements",
+      description: "Unlock 15 badges as you build your writing habit. Celebrate milestones for entries, streaks, and words written."
+    },
+    {
+      icon: Download,
+      title: "Export Your Journal",
+      description: "Download all your entries as PDF or text files. Your writing is always yours to keep."
     },
     {
       icon: Lock,
