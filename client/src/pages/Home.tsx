@@ -207,7 +207,7 @@ export default function Home() {
   }, [isAuthenticated]);
   
   const handleWelcomeClose = () => {
-    dismissWelcome(user?.id);
+    dismissWelcome();
   };
   
   const handleReminderClose = () => {

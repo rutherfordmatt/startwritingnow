@@ -27,16 +27,14 @@ export function useWelcomeModal(isAuthenticated: boolean, userId?: string) {
       const storageKey = `${STORAGE_KEY_PREFIX}${userId}`;
       const hasSeenWelcome = localStorage.getItem(storageKey);
       if (!hasSeenWelcome) {
+        // Mark as seen immediately when showing, so even if user refreshes mid-flow it won't repeat
+        localStorage.setItem(storageKey, "true");
         setShowWelcome(true);
       }
     }
   }, [isAuthenticated, userId]);
 
-  const dismissWelcome = (userId?: string) => {
-    if (userId) {
-      const storageKey = `${STORAGE_KEY_PREFIX}${userId}`;
-      localStorage.setItem(storageKey, "true");
-    }
+  const dismissWelcome = () => {
     setShowWelcome(false);
   };
 
