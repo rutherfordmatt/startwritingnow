@@ -119,9 +119,18 @@ export default function Features() {
             </div>
             <h1 className="text-3xl md:text-4xl font-bold">Feature Roadmap</h1>
           </div>
-          <p className="text-lg text-muted-foreground">
-            Help shape the future of startwriting.now! Vote on features you'd love to see, or suggest your own ideas.
-          </p>
+          
+          <div className="p-5 rounded-xl bg-muted/40 border border-border/50 mb-2">
+            <p className="text-foreground/90 leading-relaxed mb-3">
+              I'm building startwriting.now in the open, and giving you the chance to suggest and influence what gets built next. Vote on what matters to you, or share your own ideas.
+            </p>
+            <p className="text-foreground/90">
+              Let me know what you want to see.
+            </p>
+            <p className="text-sm text-muted-foreground mt-3 italic">
+              — Matt
+            </p>
+          </div>
         </motion.div>
 
         {user && (
