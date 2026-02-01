@@ -9,6 +9,7 @@ interface StreakAlertProps {
   hasWrittenToday: boolean;
   userId?: string;
   onDismiss: () => void;
+  skipAtRisk?: boolean; // Skip "at-risk" alerts when WelcomeBackPill handles them
 }
 
 const DISMISSED_KEY_PREFIX = "snw_streak_alert_dismissed_";
@@ -59,7 +60,7 @@ export function useStreakAlert(currentStreak: number, hasWrittenToday: boolean, 
   return { showAlert, alertType, dismissAlert };
 }
 
-export function StreakAlert({ currentStreak, longestStreak, hasWrittenToday, userId, onDismiss }: StreakAlertProps) {
+export function StreakAlert({ currentStreak, longestStreak, hasWrittenToday, userId, onDismiss, skipAtRisk = false }: StreakAlertProps) {
   const { showAlert, alertType, dismissAlert } = useStreakAlert(currentStreak, hasWrittenToday, userId);
 
   const handleDismiss = () => {
@@ -67,7 +68,9 @@ export function StreakAlert({ currentStreak, longestStreak, hasWrittenToday, use
     onDismiss();
   };
 
+  // Skip rendering if no alert, or if skipAtRisk is true and this is an at-risk alert
   if (!showAlert || !alertType) return null;
+  if (skipAtRisk && alertType === "at-risk") return null;
 
   const isAtRisk = alertType === "at-risk";
   const isMilestone = alertType === "milestone";

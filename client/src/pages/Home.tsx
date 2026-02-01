@@ -6,7 +6,7 @@ import { PromptCard, type PromptCategory } from "@/components/PromptCard";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { WelcomeModal, useWelcomeModal } from "@/components/WelcomeModal";
-import { StreakAlert } from "@/components/StreakAlert";
+import { StreakAlert, useStreakAlert } from "@/components/StreakAlert";
 import { ReminderSetupModal } from "@/components/ReminderSetupModal";
 import { WelcomeBackPill } from "@/components/WelcomeBackPill";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,14 @@ export default function Home() {
   
   // Use server-calculated value to avoid timezone mismatches
   const hasWrittenToday = streak?.hasWrittenToday ?? false;
+  
+  // Track streak alert type to coordinate with WelcomeBackPill (only show one notification)
+  const { alertType: streakAlertType } = useStreakAlert(
+    streak?.currentStreak ?? 0, 
+    hasWrittenToday, 
+    user?.id
+  );
+  const isMilestoneActive = streakAlertType === "milestone" && !streakAlertDismissed;
   
   const monthlyWordCount = useMemo(() => {
     if (!entries) return 0;
@@ -300,6 +308,7 @@ export default function Home() {
           </motion.div>
         )}
 
+        {/* Show StreakAlert for milestone celebrations; skip at-risk alerts when WelcomeBackPill handles them (user has entries) */}
         {isAuthenticated && !streakAlertDismissed && streak && (
           <StreakAlert
             currentStreak={streak.currentStreak}
@@ -307,6 +316,7 @@ export default function Home() {
             hasWrittenToday={hasWrittenToday}
             userId={user?.id}
             onDismiss={() => setStreakAlertDismissed(true)}
+            skipAtRisk={entries && entries.length > 0}
           />
         )}
         
@@ -323,7 +333,8 @@ export default function Home() {
           </motion.div>
         )}
         
-        {isAuthenticated && streak && entries && entries.length > 0 && (
+        {/* Hide WelcomeBackPill when milestone alert is showing (milestones get the spotlight) */}
+        {isAuthenticated && streak && entries && entries.length > 0 && !isMilestoneActive && (
           <WelcomeBackPill
             userName={user?.firstName || undefined}
             currentStreak={streak.currentStreak}
