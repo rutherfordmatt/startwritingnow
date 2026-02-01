@@ -230,29 +230,37 @@ export default function Features() {
                   <Card className="p-5" data-testid={`feature-card-${feature.id}`}>
                     <div className="flex gap-4">
                       <div className="flex flex-col items-center gap-1 min-w-[60px]">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleVote(feature.id, 'up')}
-                          className={`h-8 w-8 ${userVote === 'up' ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : ''}`}
-                          disabled={voteMutation.isPending}
-                          data-testid={`button-upvote-${feature.id}`}
-                        >
-                          <ThumbsUp className="w-4 h-4" />
-                        </Button>
-                        <span className={`font-semibold text-sm ${netVotes > 0 ? 'text-green-600' : netVotes < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {netVotes > 0 ? '+' : ''}{netVotes}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleVote(feature.id, 'down')}
-                          className={`h-8 w-8 ${userVote === 'down' ? 'text-red-500 bg-red-100 dark:bg-red-900/30' : ''}`}
-                          disabled={voteMutation.isPending}
-                          data-testid={`button-downvote-${feature.id}`}
-                        >
-                          <ThumbsDown className="w-4 h-4" />
-                        </Button>
+                        {user ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleVote(feature.id, 'up')}
+                              className={`h-8 w-8 ${userVote === 'up' ? 'text-green-600 bg-green-100 dark:bg-green-900/30' : ''}`}
+                              disabled={voteMutation.isPending}
+                              data-testid={`button-upvote-${feature.id}`}
+                            >
+                              <ThumbsUp className="w-4 h-4" />
+                            </Button>
+                            <span className={`font-semibold text-sm ${netVotes > 0 ? 'text-green-600' : netVotes < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                              {netVotes > 0 ? '+' : ''}{netVotes}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleVote(feature.id, 'down')}
+                              className={`h-8 w-8 ${userVote === 'down' ? 'text-red-500 bg-red-100 dark:bg-red-900/30' : ''}`}
+                              disabled={voteMutation.isPending}
+                              data-testid={`button-downvote-${feature.id}`}
+                            >
+                              <ThumbsDown className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <span className={`font-semibold text-sm py-3 ${netVotes > 0 ? 'text-green-600' : netVotes < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                            {netVotes > 0 ? '+' : ''}{netVotes}
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
