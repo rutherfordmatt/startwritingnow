@@ -9,7 +9,8 @@ import { WritingCalendar } from "@/components/WritingCalendar";
 import { VerificationBanner } from "@/components/VerificationBanner";
 import { Achievements } from "@/components/Achievements";
 import { format } from "date-fns";
-import { Download, Flame, Calendar, BookOpen, ChevronDown, ChevronRight, Trash2, PenLine, LogOut, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2 } from "lucide-react";
+import { Download, Flame, Calendar, BookOpen, ChevronDown, ChevronRight, Trash2, PenLine, LogOut, FileText, FileType, Bell, Mail, Clock, Send, AlertTriangle, Target, Share2, Smile, CloudSun, Heart, Minus, AlertCircle, CloudRain, Zap } from "lucide-react";
+import type { MoodValue } from "@shared/schema";
 import { SiX, SiFacebook, SiThreads, SiBluesky } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -60,6 +61,16 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => ({
   value: `${hour.toString().padStart(2, "0")}:00`,
   label: `${hour === 0 ? "12" : hour > 12 ? hour - 12 : hour}:00 ${hour < 12 ? "AM" : "PM"}`,
 }));
+
+const MOOD_CONFIG: Record<MoodValue, { icon: typeof Smile; color: string; label: string }> = {
+  happy: { icon: Smile, label: 'Happy', color: 'text-amber-500' },
+  calm: { icon: CloudSun, label: 'Calm', color: 'text-sky-500' },
+  grateful: { icon: Heart, label: 'Grateful', color: 'text-rose-500' },
+  neutral: { icon: Minus, label: 'Neutral', color: 'text-slate-500' },
+  anxious: { icon: AlertCircle, label: 'Anxious', color: 'text-orange-500' },
+  sad: { icon: CloudRain, label: 'Sad', color: 'text-blue-500' },
+  stressed: { icon: Zap, label: 'Stressed', color: 'text-purple-500' },
+};
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -793,6 +804,14 @@ export default function Dashboard() {
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                          {entry.mood && MOOD_CONFIG[entry.mood as MoodValue] && (() => {
+                            const MoodIcon = MOOD_CONFIG[entry.mood as MoodValue].icon;
+                            return (
+                              <span title={MOOD_CONFIG[entry.mood as MoodValue].label}>
+                                <MoodIcon className={`w-4 h-4 ${MOOD_CONFIG[entry.mood as MoodValue].color}`} />
+                              </span>
+                            );
+                          })()}
                           <span className="text-xs font-mono text-muted-foreground">{entry.wordCount} words</span>
                           <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
