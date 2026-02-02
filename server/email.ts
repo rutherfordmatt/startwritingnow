@@ -330,6 +330,12 @@ export async function sendWeeklySummaryEmail({
             </div>
           </div>
           
+          <div style="background: #1a1a2e; padding: 25px; border-radius: 12px; margin-top: 20px; text-align: center;">
+            <p style="color: #fff; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">Get better at work. Every week.</p>
+            <p style="color: rgba(255,255,255,0.8); font-size: 14px; margin: 0 0 15px 0;">One email. Practical tools. Real progress.</p>
+            <a href="https://mattrutherford.co.uk" style="display: inline-block; background: #fff; color: #1a1a2e; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">Join the Newsletter</a>
+          </div>
+          
           <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
             <p style="margin: 0;">You're receiving this weekly summary because you have an active account.</p>
             <p style="margin: 5px 0 0 0;">Keep writing, keep growing.</p>
