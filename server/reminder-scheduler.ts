@@ -68,6 +68,14 @@ async function sendReminders(): Promise<void> {
       const userCurrentTime = format(now, 'HH:mm', { timeZone: user.reminderTimezone });
       
       if (userCurrentTime === user.reminderTime) {
+        // Check if we already sent a reminder today (within last 23 hours to avoid edge cases)
+        if (user.lastReminderSentAt) {
+          const hoursSinceLastReminder = (now.getTime() - new Date(user.lastReminderSentAt).getTime()) / (1000 * 60 * 60);
+          if (hoursSinceLastReminder < 23) {
+            continue; // Already sent today, skip
+          }
+        }
+        
         const prompt = await getRandomPrompt();
         const success = await sendReminderEmail({
           to: user.email,
@@ -78,6 +86,10 @@ async function sendReminders(): Promise<void> {
         });
         
         if (success) {
+          // Update last reminder sent timestamp to prevent duplicates
+          await db.update(users)
+            .set({ lastReminderSentAt: now })
+            .where(eq(users.id, user.id));
           console.log(`Reminder sent to ${user.email} at their local time ${user.reminderTime} (${user.reminderTimezone})`);
         } else {
           console.error(`Failed to send reminder to ${user.email}`);

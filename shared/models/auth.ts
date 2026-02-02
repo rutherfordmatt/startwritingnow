@@ -24,6 +24,7 @@ export const users = pgTable("users", {
   reminderEnabled: boolean("reminder_enabled").default(false),
   reminderTime: varchar("reminder_time").default("09:00"),
   reminderTimezone: varchar("reminder_timezone").default("America/New_York"),
+  lastReminderSentAt: timestamp("last_reminder_sent_at"),
   dailyWordGoal: integer("daily_word_goal"),
   weeklySummaryEnabled: boolean("weekly_summary_enabled").default(true),
   lastWeeklySummaryAt: timestamp("last_weekly_summary_at"),
