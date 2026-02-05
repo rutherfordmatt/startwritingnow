@@ -61,11 +61,17 @@ async function sendReminders(): Promise<void> {
   const now = new Date();
   
   for (const user of usersWithReminders) {
-    if (!user.email || !user.reminderTime || !user.reminderTimezone) continue;
+    if (!user.email || !user.reminderTime || !user.reminderTimezone) {
+      console.log(`Skipping user ${user.id}: missing email/time/timezone`);
+      continue;
+    }
     
     try {
       // Format current UTC time directly to user's timezone - no double conversion
       const userCurrentTime = format(now, 'HH:mm', { timeZone: user.reminderTimezone });
+      
+      // Log every minute check for debugging (will help diagnose timing issues)
+      console.log(`[Reminder Check] User: ${user.email}, Their time: ${userCurrentTime}, Target: ${user.reminderTime}, Match: ${userCurrentTime === user.reminderTime}`);
       
       if (userCurrentTime === user.reminderTime) {
         // Check if we already sent a reminder today (within last 23 hours to avoid edge cases)
