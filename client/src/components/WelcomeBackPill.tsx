@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Sparkles } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -19,6 +20,13 @@ export function WelcomeBackPill({
   lastEntryDate,
   hasWrittenToday 
 }: WelcomeBackPillProps) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (totalEntries === 0) return null;
   
   const name = userName || "there";
@@ -53,34 +61,39 @@ export function WelcomeBackPill({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="flex justify-center mb-4"
-    >
-      <div 
-        className={`inline-flex flex-col items-center gap-0.5 px-5 py-2.5 rounded-2xl text-center transition-colors ${
-          isAtRisk 
-            ? "bg-orange-50 border border-orange-200/60 dark:bg-orange-950/30 dark:border-orange-800/40" 
-            : "bg-muted/50 border border-border/30"
-        }`}
-        data-testid="pill-welcome-back"
-      >
-        <div className={`flex items-center gap-2 text-sm ${
-          isAtRisk ? "text-orange-700 dark:text-orange-300 font-medium" : "text-foreground/80"
-        }`}>
-          {currentStreak > 0 ? (
-            <Flame className={`w-3.5 h-3.5 ${isAtRisk ? "text-orange-500" : "text-orange-500"}`} />
-          ) : (
-            <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-          )}
-          <span>{getMainMessage()}</span>
-        </div>
-        <div className={`text-xs ${isAtRisk ? "text-orange-600/70 dark:text-orange-400/70" : "text-muted-foreground"}`}>
-          {getSecondaryMessage()}
-        </div>
-      </div>
-    </motion.div>
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          className="flex justify-center mb-4"
+        >
+          <div 
+            className={`inline-flex flex-col items-center gap-0.5 px-5 py-2.5 rounded-2xl text-center transition-colors ${
+              isAtRisk 
+                ? "bg-orange-50 border border-orange-200/60 dark:bg-orange-950/30 dark:border-orange-800/40" 
+                : "bg-muted/50 border border-border/30"
+            }`}
+            data-testid="pill-welcome-back"
+          >
+            <div className={`flex items-center gap-2 text-sm ${
+              isAtRisk ? "text-orange-700 dark:text-orange-300 font-medium" : "text-foreground/80"
+            }`}>
+              {currentStreak > 0 ? (
+                <Flame className={`w-3.5 h-3.5 ${isAtRisk ? "text-orange-500" : "text-orange-500"}`} />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 text-primary/60" />
+              )}
+              <span>{getMainMessage()}</span>
+            </div>
+            <div className={`text-xs ${isAtRisk ? "text-orange-600/70 dark:text-orange-400/70" : "text-muted-foreground"}`}>
+              {getSecondaryMessage()}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
