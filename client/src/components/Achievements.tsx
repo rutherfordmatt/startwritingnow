@@ -112,15 +112,13 @@ export function Achievements() {
                       transition={{ delay: index * 0.05 }}
                     >
                       <div 
-                        className="group w-20 text-center cursor-default"
+                        className="group flex flex-col items-center w-20 cursor-default"
                         data-testid={`achievement-${achievement.id}`}
                       >
-                        <div className="mx-auto mb-2">
-                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400/20 via-emerald-400/15 to-green-500/10 border border-green-500/30 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
-                            <Icon className="w-7 h-7 text-green-600 dark:text-green-400" />
-                          </div>
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400/20 via-emerald-400/15 to-green-500/10 border border-green-500/30 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200 mb-2">
+                          <Icon className="w-7 h-7 text-green-600 dark:text-green-400" />
                         </div>
-                        <h3 className="text-[11px] font-medium leading-tight text-foreground/80">{achievement.title}</h3>
+                        <h3 className="text-[11px] font-medium leading-tight text-foreground/80 text-center">{achievement.title}</h3>
                       </div>
                     </motion.div>
                   </TooltipTrigger>
