@@ -149,6 +149,10 @@ export default function Auth() {
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Continue
                   </Button>
+
+                  <p className="text-xs text-muted-foreground text-center" data-testid="text-magic-link-note">
+                    No password needed. We'll send a secure sign-in link to your email.
+                  </p>
                 </form>
               </CardContent>
             </Card>
