@@ -22,9 +22,8 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express
 - **Language**: TypeScript (ESM modules)
 - **API Design**: RESTful JSON API with Zod schema validation
-- **Authentication**: Username/password with Passport.js (passport-local strategy)
+- **Authentication**: Magic link email sign-in (passwordless) with Passport.js session management
 - **Session Management**: PostgreSQL-backed sessions via connect-pg-simple
-- **Password Hashing**: bcryptjs with 12 salt rounds
 
 ### Data Storage
 - **Database**: PostgreSQL
@@ -38,8 +37,9 @@ Preferred communication style: Simple, everyday language.
 - **Protected Routes**: Authentication check via `isAuthenticated` middleware and client-side route guards
 
 ### Database Schema
-- **users**: User accounts with username, hashed password, reminder preferences, email verification fields, and weekly summary settings (weeklySummaryEnabled, lastWeeklySummaryAt)
+- **users**: User accounts with email, optional password (legacy), reminder preferences, email verification fields, and weekly summary settings
 - **sessions**: Authentication sessions
+- **magic_link_tokens**: Passwordless login tokens (email, token, expiresAt, usedAt)
 - **prompts**: 250 writing prompts with categories (Life/Career/Gratitude/Creativity/Mindfulness, 50 each)
 - **entries**: User journal entries with word count tracking and mood field
 
@@ -77,10 +77,15 @@ Preferred communication style: Simple, everyday language.
 - **Files**: `shared/achievements.ts` defines all achievements, `client/src/components/Achievements.tsx` displays them
 - **Display**: Shows unlocked badges with icons, progress bars for next achievements
 
-### Email Verification System
-- **Flow**: Users receive verification email on signup, must verify before enabling reminders
+### Magic Link Authentication
+- **Flow**: Users enter email on /auth page. If new user, they're asked for their first name. A magic link email is sent. Clicking the link at /auth/verify logs them in.
+- **Security**: Tokens use crypto.randomBytes(32), expire in 15 minutes, single-use (marked as used after verification)
+- **New Users**: Account created automatically when magic link is requested, marked as email-verified
+- **Welcome Email**: Sent to new users alongside the magic link email
+
+### Email Verification System (Legacy)
+- **Flow**: Legacy email verification system still present for existing users
 - **Security**: Tokens use crypto.randomBytes(32), expire in 24 hours, cleared after verification
-- **Welcome Email**: Sent automatically after successful email verification
 - **UI**: Verification banner displayed on Dashboard until user verifies email
 
 ### Email Reminders
@@ -143,9 +148,10 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Authentication
-- Username/password authentication with passport-local
-- Password hashing with bcryptjs
+- Magic link (passwordless) authentication via email
+- Tokens generated with crypto.randomBytes(32), expire in 15 minutes, single-use
 - Sessions stored in PostgreSQL for persistence
+- Magic link emails sent via Resend
 
 ### Database
 - PostgreSQL via `DATABASE_URL` environment variable
@@ -159,8 +165,7 @@ Preferred communication style: Simple, everyday language.
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit` - Database ORM and migrations
 - `express-session` / `connect-pg-simple` - Session management
-- `passport` / `passport-local` - Local authentication strategy
-- `bcryptjs` - Password hashing
+- `passport` - Authentication session management
 - `@tanstack/react-query` - Data fetching and caching
 - `framer-motion` - Animations
 - `date-fns` - Date formatting

@@ -1,5 +1,4 @@
 import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
@@ -33,7 +32,7 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    rolling: true, // Refresh session on each request to extend expiration for active users
+    rolling: true,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -48,29 +47,6 @@ export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
-
-  passport.use(
-    new LocalStrategy(
-      { usernameField: 'email', passwordField: 'password' },
-      async (email, password, done) => {
-        try {
-          const user = await authStorage.getUserByEmail(email);
-          if (!user) {
-            return done(null, false, { message: "Invalid email or password" });
-          }
-
-          const isValid = await authStorage.validatePassword(user, password);
-          if (!isValid) {
-            return done(null, false, { message: "Invalid email or password" });
-          }
-
-          return done(null, { id: user.id, email: user.email! });
-        } catch (error) {
-          return done(error);
-        }
-      }
-    )
-  );
 
   passport.serializeUser((user, done) => {
     done(null, user.id);

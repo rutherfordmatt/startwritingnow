@@ -28,6 +28,13 @@ const FRIENDLY_GREETINGS = [
   "Let's capture today's thoughts",
 ];
 
+interface MagicLinkEmailData {
+  to: string;
+  magicLinkUrl: string;
+  isNewUser: boolean;
+  firstName?: string;
+}
+
 interface VerificationEmailData {
   to: string;
   username: string;
@@ -43,6 +50,64 @@ interface WelcomeEmailData {
 interface GoodbyeEmailData {
   to: string;
   username: string;
+}
+
+export async function sendMagicLinkEmail({ to, magicLinkUrl, isNewUser, firstName }: MagicLinkEmailData): Promise<boolean> {
+  const greeting = firstName ? `Hi ${firstName},` : "Hi there,";
+  const subject = isNewUser
+    ? "Complete your sign up - startwriting.now"
+    : "Your sign-in link - startwriting.now";
+  const heading = isNewUser ? "Welcome aboard" : "Sign in to your account";
+  const subheading = isNewUser
+    ? "One click to start your writing journey"
+    : "Click below to sign in securely";
+  const bodyText = isNewUser
+    ? "Thanks for signing up! Click the button below to confirm your email and start journaling."
+    : "We received a sign-in request for your account. Click the button below to log in.";
+
+  try {
+    await resend.emails.send({
+      from: 'startwriting.now <noreply@startwriting.now>',
+      to: [to],
+      subject,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">${heading}</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">${subheading}</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 12px 12px;">
+            <p style="margin: 0 0 20px 0; color: #666;">${greeting}</p>
+            <p style="margin: 0 0 20px 0; color: #666;">${bodyText}</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${magicLinkUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Sign In</a>
+            </div>
+            
+            <p style="margin: 25px 0 0 0; color: #888; font-size: 14px; text-align: center;">
+              This link expires in 15 minutes and can only be used once.
+            </p>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+            <p style="margin: 0;">If you didn't request this link, you can safely ignore this email.</p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error('Failed to send magic link email:', error);
+    return false;
+  }
 }
 
 export async function sendVerificationEmail({ to, username, verificationUrl }: VerificationEmailData): Promise<boolean> {

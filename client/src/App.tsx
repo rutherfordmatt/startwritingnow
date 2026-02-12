@@ -17,6 +17,7 @@ import Admin from "@/pages/Admin";
 import VerifyEmail from "@/pages/VerifyEmail";
 import About from "@/pages/About";
 import Features from "@/pages/Features";
+import MagicLinkVerify from "@/pages/MagicLinkVerify";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/about" component={About} />
       <Route path="/features" component={Features} />
+      <Route path="/auth/verify" component={MagicLinkVerify} />
       <Route path="/auth" component={Auth} />
       <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}

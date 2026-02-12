@@ -9,15 +9,17 @@ interface User {
   reminderEnabled: boolean | null;
 }
 
-interface LoginCredentials {
+interface MagicLinkRequest {
   email: string;
-  password: string;
+  firstName?: string;
 }
 
-interface RegisterCredentials {
-  email: string;
-  password: string;
-  firstName: string;
+interface MagicLinkResponse {
+  message: string;
+}
+
+interface EmailCheckResponse {
+  exists: boolean;
 }
 
 async function fetchUser(): Promise<User | null> {
@@ -46,21 +48,29 @@ export function useAuth() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginCredentials) => {
-      const response = await apiRequest("POST", "/api/auth/login", credentials);
+  const checkEmailMutation = useMutation({
+    mutationFn: async (email: string): Promise<EmailCheckResponse> => {
+      const response = await apiRequest("POST", "/api/auth/magic-link/check", { email });
       return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["/api/auth/user"], data);
-      queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/streak"] });
     },
   });
 
-  const registerMutation = useMutation({
-    mutationFn: async (credentials: RegisterCredentials) => {
-      const response = await apiRequest("POST", "/api/auth/register", credentials);
+  const requestMagicLinkMutation = useMutation({
+    mutationFn: async (data: MagicLinkRequest): Promise<MagicLinkResponse> => {
+      const response = await apiRequest("POST", "/api/auth/magic-link", data);
+      return response.json();
+    },
+  });
+
+  const verifyMagicLinkMutation = useMutation({
+    mutationFn: async (token: string) => {
+      const response = await fetch(`/api/auth/magic-link/verify?token=${token}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Verification failed");
+      }
       return response.json();
     },
     onSuccess: (data) => {
@@ -85,12 +95,14 @@ export function useAuth() {
     user,
     isLoading,
     isAuthenticated: !!user,
-    login: loginMutation.mutateAsync,
-    loginError: loginMutation.error,
-    isLoggingIn: loginMutation.isPending,
-    register: registerMutation.mutateAsync,
-    registerError: registerMutation.error,
-    isRegistering: registerMutation.isPending,
+    checkEmail: checkEmailMutation.mutateAsync,
+    isCheckingEmail: checkEmailMutation.isPending,
+    requestMagicLink: requestMagicLinkMutation.mutateAsync,
+    magicLinkError: requestMagicLinkMutation.error,
+    isRequestingMagicLink: requestMagicLinkMutation.isPending,
+    verifyMagicLink: verifyMagicLinkMutation.mutateAsync,
+    verifyError: verifyMagicLinkMutation.error,
+    isVerifying: verifyMagicLinkMutation.isPending,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
   };

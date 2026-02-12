@@ -1,19 +1,28 @@
 import type { Express } from "express";
-import passport from "passport";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./localAuth";
+import { sendMagicLinkEmail, sendWelcomeEmail } from "../../email";
+
+function getAppUrl(): string {
+  if (process.env.REPLIT_DOMAINS) {
+    const domains = process.env.REPLIT_DOMAINS.split(',');
+    const customDomain = domains.find(d => !d.includes('replit'));
+    const domain = customDomain || domains[0];
+    return `https://${domain}`;
+  }
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  }
+  return 'http://localhost:5000';
+}
 
 export function registerAuthRoutes(app: Express): void {
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/magic-link/check", async (req, res) => {
     try {
-      const { email, password, firstName } = req.body;
+      const { email } = req.body;
 
-      if (!email || !password || !firstName) {
-        return res.status(400).json({ message: "Email, password, and first name are required" });
-      }
-
-      if (password.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,57 +30,105 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(400).json({ message: "Please enter a valid email address" });
       }
 
-      if (firstName.trim().length < 1) {
-        return res.status(400).json({ message: "First name is required" });
-      }
-
-      const existingEmail = await authStorage.getUserByEmail(email);
-      if (existingEmail) {
-        return res.status(400).json({ message: "Email already registered" });
-      }
-
-      const user = await authStorage.createUser(email, password, firstName.trim());
-
-      req.login({ id: user.id, email: user.email! }, (err) => {
-        if (err) {
-          console.error("Login error after registration:", err);
-          return res.status(500).json({ message: "Registration successful but login failed" });
-        }
-        res.status(201).json({ id: user.id, email: user.email, firstName: user.firstName, reminderEnabled: user.reminderEnabled });
-      });
+      const existingUser = await authStorage.getUserByEmail(email);
+      res.json({ exists: !!existingUser });
     } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Registration failed" });
+      console.error("Email check error:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
-  app.post("/api/auth/login", async (req, res, next) => {
-    passport.authenticate("local", async (err: any, user: any, info: any) => {
-      if (err) {
-        return res.status(500).json({ message: "Login failed" });
-      }
-      if (!user) {
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+  app.post("/api/auth/magic-link", async (req, res) => {
+    try {
+      const { email, firstName } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
       }
 
-      const fullUser = await authStorage.getUser(user.id);
-      if (!fullUser) {
-        return res.status(500).json({ message: "Login failed" });
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Please enter a valid email address" });
       }
 
-      req.login(user, (loginErr) => {
-        if (loginErr) {
-          return res.status(500).json({ message: "Login failed" });
+      let existingUser = await authStorage.getUserByEmail(email);
+      const isNewUser = !existingUser;
+
+      if (isNewUser) {
+        if (!firstName || firstName.trim().length < 1) {
+          return res.status(400).json({ message: "First name is required for new accounts" });
         }
-        res.json({ 
-          id: fullUser.id, 
-          email: fullUser.email,
-          firstName: fullUser.firstName,
-          lastName: fullUser.lastName,
-          reminderEnabled: fullUser.reminderEnabled
+        existingUser = await authStorage.createUserWithMagicLink(email, firstName.trim());
+      }
+
+      const token = await authStorage.createMagicLinkToken(email);
+      const appUrl = getAppUrl();
+      const magicLinkUrl = `${appUrl}/auth/verify?token=${token}`;
+
+      const sent = await sendMagicLinkEmail({
+        to: email,
+        magicLinkUrl,
+        isNewUser,
+        firstName: existingUser!.firstName || firstName,
+      });
+
+      if (!sent) {
+        return res.status(500).json({ message: "Failed to send magic link email. Please try again." });
+      }
+
+      if (isNewUser) {
+        await sendWelcomeEmail({
+          to: email,
+          username: existingUser!.firstName || email,
+          appUrl,
+        });
+      }
+
+      res.json({ message: "Magic link sent! Check your email." });
+    } catch (error) {
+      console.error("Magic link error:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
+  app.get("/api/auth/magic-link/verify", async (req, res) => {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ message: "Invalid or missing token" });
+      }
+
+      const tokenRecord = await authStorage.verifyMagicLinkToken(token);
+      if (!tokenRecord) {
+        return res.status(400).json({ message: "This link has expired or has already been used. Please request a new one." });
+      }
+
+      const user = await authStorage.getUserByEmail(tokenRecord.email);
+      if (!user) {
+        return res.status(400).json({ message: "No account found for this email" });
+      }
+
+      req.login({ id: user.id, email: user.email! }, async (err) => {
+        if (err) {
+          console.error("Login error after magic link verification:", err);
+          return res.status(500).json({ message: "Verification succeeded but login failed. Please try the link again." });
+        }
+
+        await authStorage.markTokenUsed(tokenRecord.id);
+
+        res.json({
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          reminderEnabled: user.reminderEnabled,
         });
       });
-    })(req, res, next);
+    } catch (error) {
+      console.error("Magic link verify error:", error);
+      res.status(500).json({ message: "Verification failed. Please try again." });
+    }
   });
 
   app.post("/api/auth/logout", (req, res) => {

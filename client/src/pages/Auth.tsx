@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -6,30 +6,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import logoBlack from "@assets/snwlogo_black_1768413266371.png";
 import logoWhite from "@assets/snwlogo_white_1768413266371.png";
 
+type AuthStep = "email" | "name" | "sent";
+
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [error, setError] = useState("");
   const [, setLocation] = useLocation();
   
-  const { login, register, isLoggingIn, isRegistering } = useAuth();
-  
-  const isLoading = isLoggingIn || isRegistering;
+  const { user, checkEmail, isCheckingEmail, requestMagicLink, isRequestingMagicLink } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const isLoading = isCheckingEmail || isRequestingMagicLink;
+
+  useEffect(() => {
+    if (user) {
+      setLocation("/dashboard");
+    }
+  }, [user, setLocation]);
+
+  if (user) {
+    return null;
+  }
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields");
+    if (!email.trim()) {
+      setError("Please enter your email");
       return;
     }
 
@@ -39,28 +49,37 @@ export default function Auth() {
       return;
     }
 
-    if (!isLogin && !firstName.trim()) {
-      setError("Please fill in all fields");
-      return;
+    try {
+      const { exists } = await checkEmail(email);
+      if (exists) {
+        await requestMagicLink({ email });
+        setStep("sent");
+      } else {
+        setStep("name");
+      }
+    } catch (err: any) {
+      const message = err?.message || "Something went wrong";
+      try {
+        const parsed = JSON.parse(message.replace(/^\d+:\s*/, ""));
+        setError(parsed.message || message);
+      } catch {
+        setError(message);
+      }
     }
+  };
 
-    if (!isLogin && password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+  const handleNameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-    if (!isLogin && password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!firstName.trim()) {
+      setError("Please enter your name");
       return;
     }
 
     try {
-      if (isLogin) {
-        await login({ email, password });
-      } else {
-        await register({ email, password, firstName: firstName.trim() });
-      }
-      setLocation("/");
+      await requestMagicLink({ email, firstName: firstName.trim() });
+      setStep("sent");
     } catch (err: any) {
       const message = err?.message || "Something went wrong";
       try {
@@ -84,113 +103,155 @@ export default function Auth() {
 
       <main className="flex-1 flex items-center justify-center px-4 pt-20 pb-8">
         <motion.div
+          key={step}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <Card className="border-border/50">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-serif">
-                {isLogin ? "Welcome back" : "Welcome! Let's get started"}
-              </CardTitle>
-              <CardDescription>
-                {isLogin 
-                  ? "Ready to write?" 
-                  : "Your daily writing practice begins here"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {!isLogin && (
+          {step === "email" && (
+            <Card className="border-border/50">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-serif">
+                  Welcome to startwriting.now
+                </CardTitle>
+                <CardDescription>
+                  Enter your email to sign in or create an account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleEmailSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">What should we call you?</Label>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                      autoFocus
+                      data-testid="input-email"
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-sm text-destructive text-center" data-testid="text-auth-error">
+                      {error}
+                    </p>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                    data-testid="button-auth-submit"
+                  >
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Continue
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {step === "name" && (
+            <Card className="border-border/50">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-serif">
+                  Welcome! Let's get started
+                </CardTitle>
+                <CardDescription>
+                  What should we call you?
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleNameSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Your first name</Label>
                     <Input
                       id="firstName"
                       type="text"
-                      placeholder="Your first name"
+                      placeholder="Enter your first name"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      disabled={isLoading}
+                      disabled={isRequestingMagicLink}
+                      autoFocus
                       data-testid="input-first-name"
                     />
                   </div>
-                )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                    data-testid="input-email"
-                  />
-                </div>
+                  {error && (
+                    <p className="text-sm text-destructive text-center" data-testid="text-auth-error">
+                      {error}
+                    </p>
+                  )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    data-testid="input-password"
-                  />
-                </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isRequestingMagicLink}
+                    data-testid="button-auth-name-submit"
+                  >
+                    {isRequestingMagicLink && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Send sign-in link
+                  </Button>
 
-                {!isLogin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={isLoading}
-                      data-testid="input-confirm-password"
-                    />
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep("email");
+                        setError("");
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                      data-testid="button-back-to-email"
+                    >
+                      <ArrowLeft className="h-3 w-3" />
+                      Back
+                    </button>
                   </div>
-                )}
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
-                {error && (
-                  <p className="text-sm text-destructive text-center" data-testid="text-auth-error">
-                    {error}
-                  </p>
-                )}
+          {step === "sent" && (
+            <Card className="border-border/50">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Mail className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="text-2xl font-serif">
+                  Check your email
+                </CardTitle>
+                <CardDescription>
+                  We sent a sign-in link to <strong className="text-foreground">{email}</strong>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Click the link in the email to sign in. The link expires in 15 minutes.
+                </p>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                  data-testid="button-auth-submit"
-                >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isLogin ? "Sign In" : "Start Writing"}
-                </Button>
-              </form>
-
-              <div className="mt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setError("");
-                  }}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  data-testid="button-toggle-auth-mode"
-                >
-                  {isLogin 
-                    ? "New here? Create an account" 
-                    : "Welcome back? Sign in here"}
-                </button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("email");
+                      setEmail("");
+                      setFirstName("");
+                      setError("");
+                    }}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                    data-testid="button-try-different-email"
+                  >
+                    <ArrowLeft className="h-3 w-3" />
+                    Try a different email
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </main>
     </div>

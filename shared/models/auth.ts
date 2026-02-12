@@ -1,7 +1,6 @@
 import { sql } from "drizzle-orm";
 import { boolean, index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
-// Session storage table for express-session
 export const sessions = pgTable(
   "sessions",
   {
@@ -12,11 +11,10 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)]
 );
 
-// User storage table with username/password authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: varchar("username").unique().notNull(),
-  password: varchar("password").notNull(),
+  password: varchar("password"),
   email: varchar("email"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
@@ -36,5 +34,15 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const magicLinkTokens = pgTable("magic_link_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  token: varchar("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type InsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
