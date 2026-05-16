@@ -2,19 +2,7 @@ import type { Express } from "express";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./localAuth";
 import { sendMagicLinkEmail, sendWelcomeEmail } from "../../email";
-
-function getAppUrl(): string {
-  if (process.env.REPLIT_DOMAINS) {
-    const domains = process.env.REPLIT_DOMAINS.split(',');
-    const customDomain = domains.find(d => !d.includes('replit'));
-    const domain = customDomain || domains[0];
-    return `https://${domain}`;
-  }
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  }
-  return 'http://localhost:5000';
-}
+import { getAppUrl } from "../../app-url";
 
 export function registerAuthRoutes(app: Express): void {
   app.post("/api/auth/magic-link/check", async (req, res) => {

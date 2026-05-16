@@ -8,24 +8,9 @@ import { insertEntrySchema, MOOD_OPTIONS, voteFeatureSchema, suggestFeatureSchem
 import { z } from "zod";
 import { startReminderScheduler, sendTestReminder } from "./reminder-scheduler";
 import { sendVerificationEmail, sendWelcomeEmail, sendGoodbyeEmail } from "./email";
+import { getAppUrl } from "./app-url";
 import PDFDocument from "pdfkit";
 import { format } from "date-fns";
-
-function getAppUrl(): string {
-  // In production, REPLIT_DOMAINS contains the deployed domain(s)
-  // REPLIT_DEV_DOMAIN is NOT available in production deployments
-  if (process.env.REPLIT_DOMAINS) {
-    const domains = process.env.REPLIT_DOMAINS.split(',');
-    // Prefer custom domain (one that doesn't contain 'replit' at all)
-    const customDomain = domains.find(d => !d.includes('replit'));
-    const domain = customDomain || domains[0];
-    return `https://${domain}`;
-  }
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  }
-  return 'http://localhost:5000';
-}
 
 const APP_URL = getAppUrl();
 
