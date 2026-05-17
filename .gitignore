@@ -7,3 +7,9 @@ vite.config.ts.*
 backup.sql
 backup.dump
 *.dump
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/

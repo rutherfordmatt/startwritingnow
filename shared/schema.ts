@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./models/auth";
@@ -18,7 +18,9 @@ export const entries = pgTable("entries", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   wordCount: integer("word_count").notNull(),
   mood: varchar("mood", { length: 20 }), // Optional: happy, calm, grateful, neutral, anxious, sad, stressed
-});
+}, (table) => [
+  index("entries_user_id_created_at_idx").on(table.userId, table.createdAt),
+]);
 
 // Available moods for the UI
 export const MOOD_OPTIONS = [

@@ -7,8 +7,6 @@ import { getAppUrl } from './app-url';
 import { format } from 'date-fns-tz';
 import { subDays, startOfDay } from 'date-fns';
 
-const APP_URL = getAppUrl();
-
 function getDisplayName(user: { firstName?: string | null; username: string; email?: string | null }): string {
   if (user.firstName) {
     return user.firstName;
@@ -73,7 +71,7 @@ async function sendReminders(): Promise<void> {
           username: getDisplayName(user),
           promptContent: prompt.content,
           promptId: prompt.id,
-          appUrl: APP_URL,
+          appUrl: getAppUrl(),
         });
         
         if (success) {
@@ -196,7 +194,7 @@ async function sendWeeklySummaries(): Promise<void> {
       const success = await sendWeeklySummaryEmail({
         to: user.email,
         username: getDisplayName(user),
-        appUrl: APP_URL,
+        appUrl: getAppUrl(),
         entriesThisWeek,
         wordsThisWeek,
         currentStreak,
@@ -244,7 +242,7 @@ export async function sendTestReminder(userId: string): Promise<{ success: boole
     username: getDisplayName(user),
     promptContent: prompt.content,
     promptId: prompt.id,
-    appUrl: APP_URL,
+    appUrl: getAppUrl(),
   });
   
   return { success: sent };

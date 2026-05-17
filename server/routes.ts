@@ -12,8 +12,6 @@ import { getAppUrl } from "./app-url";
 import PDFDocument from "pdfkit";
 import { format } from "date-fns";
 
-const APP_URL = getAppUrl();
-
 function getDisplayName(user: { firstName?: string | null; username: string; email?: string | null }): string {
   if (user.firstName) {
     return user.firstName;
@@ -618,7 +616,7 @@ export async function registerRoutes(
     
     await storage.setVerificationToken(userId, token, expiresAt);
     
-    const verificationUrl = `${APP_URL}/verify-email?token=${token}`;
+    const verificationUrl = `${getAppUrl()}/verify-email?token=${token}`;
     const success = await sendVerificationEmail({
       to: settings.email,
       username: getDisplayName({ username: settings.email, email: settings.email }),
@@ -651,7 +649,7 @@ export async function registerRoutes(
       await sendWelcomeEmail({
         to: settings.email,
         username: getDisplayName({ username: settings.email, email: settings.email }),
-        appUrl: APP_URL,
+        appUrl: getAppUrl(),
       });
       await storage.markWelcomeEmailSent(result.userId!);
     }
