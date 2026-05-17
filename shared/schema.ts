@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, boolean, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, varchar, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./models/auth";
@@ -62,7 +62,9 @@ export const featureVotes = pgTable("feature_votes", {
   featureId: integer("feature_id").notNull().references(() => features.id),
   visitorId: text("visitor_id").notNull(),
   voteType: text("vote_type").notNull(), // "up" or "down"
-});
+}, (table) => [
+  uniqueIndex("feature_votes_feature_visitor_uniq").on(table.featureId, table.visitorId),
+]);
 
 // Zod schema for voting
 export const voteFeatureSchema = z.object({

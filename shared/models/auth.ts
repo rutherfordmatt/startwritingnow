@@ -34,14 +34,21 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const magicLinkTokens = pgTable("magic_link_tokens", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").notNull(),
-  token: varchar("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  usedAt: timestamp("used_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const magicLinkTokens = pgTable(
+  "magic_link_tokens",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    email: varchar("email").notNull(),
+    token: varchar("token").notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("magic_link_tokens_email_idx").on(table.email),
+    index("magic_link_tokens_expires_at_idx").on(table.expiresAt),
+  ]
+);
 
 export type InsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
