@@ -161,7 +161,18 @@ Preferred communication style: Simple, everyday language.
 - `DATABASE_URL` - PostgreSQL connection string
 - `SESSION_SECRET` - Secret for session encryption (required, no default)
 - `RESEND_API_KEY` - Resend API key for sending reminder emails
-- `PUBLIC_APP_URL` - Public base URL of the deployed app (used to build magic-link URLs and email links); falls back to `http://localhost:5000` when unset
+
+### Optional Environment Variables
+- `PUBLIC_APP_URL` - Public base URL of the deployed app (used to build magic-link URLs and email links). Falls back to `http://localhost:5000` when unset — set this in production or magic-link emails will point at localhost.
+- `PORT` - Port to listen on (default `5000`)
+- `NODE_ENV` - When `production`, enables secure session cookies, static asset serving, and `trust proxy: 1`
+
+### Server Code Layout
+- `server/index.ts` - Express entry point and request logging
+- `server/auth/` - Magic-link authentication (was `server/replit_integrations/auth/`)
+- `server/routes.ts` - Application API routes
+- `server/reminder-scheduler.ts` - node-cron-driven reminder + weekly summary email scheduler
+- `server/app-url.ts` - `getAppUrl()` helper that resolves `PUBLIC_APP_URL`
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit` - Database ORM and migrations
