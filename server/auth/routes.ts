@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./localAuth";
-import { sendMagicLinkEmail, sendWelcomeEmail } from "../../email";
-import { getAppUrl } from "../../app-url";
+import { sendMagicLinkEmail, sendWelcomeEmail } from "../email";
+import { getAppUrl } from "../app-url";
 
 export function registerAuthRoutes(app: Express): void {
   app.post("/api/auth/magic-link/check", async (req, res) => {

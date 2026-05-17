@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import crypto from "crypto";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./auth";
 import { api, updateReminderSettingsSchema, updateWordGoalSchema, updateEntryMoodSchema } from "@shared/routes";
 import { insertEntrySchema, MOOD_OPTIONS, voteFeatureSchema, suggestFeatureSchema } from "@shared/schema";
 import { z } from "zod";

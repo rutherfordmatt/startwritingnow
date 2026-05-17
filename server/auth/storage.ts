@@ -1,5 +1,5 @@
 import { users, magicLinkTokens, type User, type InsertUser, type MagicLinkToken } from "@shared/models/auth";
-import { db } from "../../db";
+import { db } from "../db";
 import { eq, sql, and, isNull, gt } from "drizzle-orm";
 import crypto from "crypto";
 

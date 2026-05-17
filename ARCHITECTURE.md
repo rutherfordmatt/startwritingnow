@@ -16,7 +16,7 @@ Preferred communication style: Simple, everyday language.
 - **State Management**: TanStack React Query for server state
 - **Styling**: Tailwind CSS with shadcn/ui component library
 - **Animations**: Framer Motion for smooth transitions and timer animations
-- **Build Tool**: Vite with custom plugins for Replit integration
+- **Build Tool**: Vite
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express
@@ -161,6 +161,7 @@ Preferred communication style: Simple, everyday language.
 - `DATABASE_URL` - PostgreSQL connection string
 - `SESSION_SECRET` - Secret for session encryption (required, no default)
 - `RESEND_API_KEY` - Resend API key for sending reminder emails
+- `PUBLIC_APP_URL` - Public base URL of the deployed app (used to build magic-link URLs and email links); falls back to `http://localhost:5000` when unset
 
 ### Key NPM Packages
 - `drizzle-orm` / `drizzle-kit` - Database ORM and migrations
