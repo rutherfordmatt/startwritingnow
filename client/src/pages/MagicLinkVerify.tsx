@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, useSearch } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ export default function MagicLinkVerify() {
   const [, setLocation] = useLocation();
   const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
   const [errorMessage, setErrorMessage] = useState("");
+  const calledRef = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -25,30 +26,20 @@ export default function MagicLinkVerify() {
       return;
     }
 
-    let cancelled = false;
+    if (calledRef.current) return;
+    calledRef.current = true;
 
-    async function verify() {
-      try {
-        await verifyMagicLink(token!);
-        if (!cancelled) {
-          setStatus("success");
-          setTimeout(() => {
-            setLocation("/dashboard");
-          }, 1500);
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setStatus("error");
-          setErrorMessage(err?.message || "Verification failed. Please request a new sign-in link.");
-        }
-      }
-    }
-
-    verify();
-
-    return () => {
-      cancelled = true;
-    };
+    verifyMagicLink(token)
+      .then(() => {
+        setStatus("success");
+        setTimeout(() => {
+          setLocation("/dashboard");
+        }, 1500);
+      })
+      .catch((err: any) => {
+        setStatus("error");
+        setErrorMessage(err?.message || "Verification failed. Please request a new sign-in link.");
+      });
   }, [token]);
 
   return (

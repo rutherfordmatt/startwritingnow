@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
@@ -10,6 +10,7 @@ export default function VerifyEmail() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const verifyEmail = useVerifyEmail();
+  const calledRef = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -20,6 +21,9 @@ export default function VerifyEmail() {
       setMessage("Invalid verification link. Please request a new one.");
       return;
     }
+
+    if (calledRef.current) return;
+    calledRef.current = true;
 
     verifyEmail.mutate(token, {
       onSuccess: (data) => {

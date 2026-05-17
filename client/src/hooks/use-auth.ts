@@ -41,7 +41,7 @@ async function fetchUser(): Promise<User | null> {
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  const { data: user, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading, error } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,
@@ -64,7 +64,7 @@ export function useAuth() {
 
   const verifyMagicLinkMutation = useMutation({
     mutationFn: async (token: string) => {
-      const response = await fetch(`/api/auth/magic-link/verify?token=${token}`, {
+      const response = await fetch(`/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -94,6 +94,7 @@ export function useAuth() {
   return {
     user,
     isLoading,
+    error,
     isAuthenticated: !!user,
     checkEmail: checkEmailMutation.mutateAsync,
     isCheckingEmail: checkEmailMutation.isPending,
