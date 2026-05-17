@@ -26,11 +26,12 @@ class AuthStorage implements IAuthStorage {
   }
 
   async createUserWithMagicLink(email: string, firstName: string): Promise<User> {
+    const normalizedEmail = email.toLowerCase();
     const [user] = await db
       .insert(users)
       .values({
-        username: email,
-        email,
+        username: normalizedEmail,
+        email: normalizedEmail,
         firstName,
         isEmailVerified: true,
       })
@@ -43,7 +44,7 @@ class AuthStorage implements IAuthStorage {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     await db.insert(magicLinkTokens).values({
-      email,
+      email: email.toLowerCase(),
       token,
       expiresAt,
     });
