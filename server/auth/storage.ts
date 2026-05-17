@@ -8,8 +8,7 @@ export interface IAuthStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUserWithMagicLink(email: string, firstName: string): Promise<User>;
   createMagicLinkToken(email: string): Promise<string>;
-  verifyMagicLinkToken(token: string): Promise<MagicLinkToken | undefined>;
-  markTokenUsed(tokenId: string): Promise<void>;
+  consumeMagicLinkToken(token: string): Promise<MagicLinkToken | undefined>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -52,25 +51,19 @@ class AuthStorage implements IAuthStorage {
     return token;
   }
 
-  async verifyMagicLinkToken(token: string): Promise<MagicLinkToken | undefined> {
+  async consumeMagicLinkToken(token: string): Promise<MagicLinkToken | undefined> {
     const [record] = await db
-      .select()
-      .from(magicLinkTokens)
+      .update(magicLinkTokens)
+      .set({ usedAt: new Date() })
       .where(
         and(
           eq(magicLinkTokens.token, token),
           isNull(magicLinkTokens.usedAt),
           gt(magicLinkTokens.expiresAt, new Date())
         )
-      );
+      )
+      .returning();
     return record;
-  }
-
-  async markTokenUsed(tokenId: string): Promise<void> {
-    await db
-      .update(magicLinkTokens)
-      .set({ usedAt: new Date() })
-      .where(eq(magicLinkTokens.id, tokenId));
   }
 }
 

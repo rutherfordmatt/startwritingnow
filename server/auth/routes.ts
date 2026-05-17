@@ -1,11 +1,20 @@
 import type { Express } from "express";
+import rateLimit from "express-rate-limit";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./localAuth";
 import { sendMagicLinkEmail, sendWelcomeEmail } from "../email";
 import { getAppUrl } from "../app-url";
 
+const magicLinkLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests. Please try again in a few minutes." },
+});
+
 export function registerAuthRoutes(app: Express): void {
-  app.post("/api/auth/magic-link/check", async (req, res) => {
+  app.post("/api/auth/magic-link/check", magicLinkLimiter, async (req, res) => {
     try {
       const { email } = req.body;
 
@@ -26,7 +35,7 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/auth/magic-link", async (req, res) => {
+  app.post("/api/auth/magic-link", magicLinkLimiter, async (req, res) => {
     try {
       const { email, firstName } = req.body;
 
@@ -87,7 +96,7 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(400).json({ message: "Invalid or missing token" });
       }
 
-      const tokenRecord = await authStorage.verifyMagicLinkToken(token);
+      const tokenRecord = await authStorage.consumeMagicLinkToken(token);
       if (!tokenRecord) {
         return res.status(400).json({ message: "This link has expired or has already been used. Please request a new one." });
       }
@@ -97,13 +106,11 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(400).json({ message: "No account found for this email" });
       }
 
-      req.login({ id: user.id, email: user.email! }, async (err) => {
+      req.login({ id: user.id, email: user.email! }, (err) => {
         if (err) {
           console.error("Login error after magic link verification:", err);
           return res.status(500).json({ message: "Verification succeeded but login failed. Please try the link again." });
         }
-
-        await authStorage.markTokenUsed(tokenRecord.id);
 
         res.json({
           id: user.id,
